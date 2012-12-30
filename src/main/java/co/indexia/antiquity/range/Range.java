@@ -127,7 +127,7 @@ public class Range<T> {
 	}
 
 	/**
-	 * Create a range using the specified element as the min and max values of this range.
+	 * Create a range using the specified value as the min and max values of this range.
 	 * 
 	 * <p>
 	 * The range uses the specified {@link Comparable} to conclude where the values lie in the range.
@@ -192,7 +192,7 @@ public class Range<T> {
 	 *            the comparator to be used, null for natural ordering
 	 * @return the created range object, not null
 	 * @throws IllegalArgumentException
-	 *             if either element is null
+	 *             if either value is null
 	 * @return ClassCastException if the specified value type does not implements {@code Comparable}
 	 */
 	public static <T> Range<T> range(T from, T to, Comparator<T> comparator) {
@@ -240,7 +240,7 @@ public class Range<T> {
 	 * 
 	 * @param point
 	 *            the point value to check for
-	 * @return true if this range contains the specified point value
+	 * @return {@code true} if this range contains the specified point value
 	 * @throws IllegalArgumentException
 	 *             If the specified <i>point</i> is null.
 	 */
@@ -255,7 +255,7 @@ public class Range<T> {
 	 * 
 	 * @param point
 	 *            the point value to check for
-	 * @return true if this entire range is before the specified point
+	 * @return {@code true} if this entire range is before the specified point
 	 * @throws IllegalArgumentException
 	 *             If the specified <i>point</i> is null.
 	 */
@@ -270,7 +270,7 @@ public class Range<T> {
 	 * 
 	 * @param point
 	 *            the point value to check for
-	 * @return true if this entire range is before the specified point
+	 * @return {@code true} if this entire range is before the specified point
 	 * @throws IllegalArgumentException
 	 *             If the specified <i>point</i> is null.
 	 */
@@ -285,7 +285,7 @@ public class Range<T> {
 	 * 
 	 * @param point
 	 *            The point value to check if the range starts with
-	 * @return true if the range minimum value equals to the specified point.
+	 * @return {@code true} if the range minimum value equals to the specified point.
 	 * @throws IllegalArgumentException
 	 *             If the specified <i>point</i> is null.
 	 */
@@ -298,7 +298,7 @@ public class Range<T> {
 	 * 
 	 * @param point
 	 *            The point value to check if the range starts with
-	 * @return true if the range minimum value equals to the specified point.
+	 * @return {@code true} if the range minimum value equals to the specified point.
 	 * @throws IllegalArgumentException
 	 *             If the specified <i>point</i> is null.
 	 */
@@ -306,17 +306,128 @@ public class Range<T> {
 		return (comparator.compare(point, max()) == 0);
 	}
 
+	// Ranges
+	/**
+	 * Checks whether the specified range is contained within this range.
+	 * 
+	 * @param otherRange
+	 *            The range to test, null throws exception.
+	 * @return {@code true} if the specified range is contained within this range.
+	 * @throws IllegalArgumentException
+	 *             If otherRange is null.
+	 */
+	public boolean contains(Range<T> otherRange) {
+		notNull(otherRange);
+
+		return contains(otherRange.min()) && contains(otherRange.max());
+	}
+
+	/**
+	 * <p>
+	 * Test if the entire of this range is before the specified range.
+	 * </p>
+	 * 
+	 * <p>
+	 * If ranges have different comperators or types the test will fail.
+	 * </p>
+	 * 
+	 * @param otherRange
+	 *            the range to check, null throws exception.
+	 * @return {@code true} if this range is before the specified range.
+	 * @throws RuntimeException
+	 *             if ranges cannot be compared
+	 */
+	public boolean isBefore(Range<T> otherRange) {
+		notNull(otherRange);
+
+		return isBefore(otherRange.min());
+	}
+
+	/**
+	 * <p>
+	 * Test if the entire of this range is after the specified range.
+	 * </p>
+	 * 
+	 * <p>
+	 * If ranges have different comperators or types the test will fail.
+	 * </p>
+	 * 
+	 * @param otherRange
+	 *            the range to check, null throws exception.
+	 * @return {@code true} if this range is after the specified range.
+	 * @throws RuntimeException
+	 *             if ranges cannot be compared
+	 */
+	public boolean isAfter(Range<T> otherRange) {
+		notNull(otherRange);
+
+		return isAfter(otherRange.max());
+	}
+
+	/**
+	 * <p>
+	 * Test if this range is overlapped by the specified range.
+	 * </p>
+	 * 
+	 * <p>
+	 * Two ranges overlap each other if there is at least one point in common.
+	 * </p>
+	 * 
+	 * <p>
+	 * If ranges have different comperators or types the test will fail.
+	 * </p>
+	 * 
+	 * @param otherRange
+	 *            the range to check, null throws exception.
+	 * @return {@code true} if the specified range overlaps with this range
+	 */
+	public boolean isOverlappedBy(Range<T> otherRange) {
+		notNull(otherRange);
+
+		return otherRange.contains(min())
+				|| otherRange.contains(max())
+				|| contains(otherRange.min());
+	}
+
+	/**
+	 * Return the intersection of this range and the specified Range.
+	 * 
+	 * Ranges must overlap.
+	 * 
+	 * @param otherRange
+	 *            other overlapping {@link Range}
+	 * @return range object which contains the intersection of this {@link Range} and the specified {@link Range}
+	 * @throws IllegalArgumentException
+	 *             if the specified {@link Range} does not overlap this {@link Range}.
+	 */
+	public Range<T> intersectionWith(Range<T> otherRange) {
+		if (this.equals(otherRange)) {
+			return this;
+		}
+		
+		if (!this.isOverlappedBy(otherRange)) {
+			throw new IllegalArgumentException(String.format(
+					"The specified range %d does not overlap with this range %d", otherRange, this));
+		}
+		
+		T min = getComparator().compare(min(), otherRange.min()) < 0 ? otherRange.min() : min();
+		T max = getComparator().compare(max(), otherRange.max()) < 0 ? max() : otherRange.max();
+		
+		return range(min, max, getComparator());
+	}
+
+	// General
 	/**
 	 * Check whether the specified value is null.
 	 * 
-	 * @param value
-	 *            The value of the range type {@link T}
+	 * @param any
+	 *            The object to test
 	 * @throws IllegalArgumentException
 	 *             If value is null
 	 */
-	private void notNull(T value) throws IllegalArgumentException {
-		if (value == null)
-			throw new IllegalArgumentException("Value is null.");
+	private void notNull(Object any) throws IllegalArgumentException {
+		if (any == null)
+			throw new IllegalArgumentException("The specified value is null.");
 	}
 
 	/**
