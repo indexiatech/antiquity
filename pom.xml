@@ -29,6 +29,8 @@
 
 	<properties>
 		<jdk.version>1.6</jdk.version>
+		<tinkerpop-blueprints-neo4j.version>2.3.0-SNAPSHOT</tinkerpop-blueprints-neo4j.version>
+		<neo4j.version>1.8.1</neo4j.version>
 
 		<junit.version>4.10</junit.version>
 		<maven-compiler-plugin.version>2.5.1</maven-compiler-plugin.version>
@@ -40,6 +42,38 @@
 			<artifactId>junit</artifactId>
 			<version>${junit.version}</version>
 			<scope>test</scope>
+		</dependency>
+
+		<!-- blueprints, with neo4j implementation -->
+		<dependency>
+			<groupId>com.tinkerpop.blueprints</groupId>
+			<artifactId>blueprints-neo4j-graph</artifactId>
+			<version>${tinkerpop-blueprints-neo4j.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.neo4j</groupId>
+					<artifactId>neo4j</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.neo4j</groupId>
+					<artifactId>neo4j-ha</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.neo4j</groupId>
+					<artifactId>neo4j-management</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.neo4j</groupId>
+			<artifactId>neo4j</artifactId>
+			<version>${neo4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.neo4j</groupId>
+			<artifactId>neo4j-kernel</artifactId>
+			<version>${neo4j.version}</version>
+			<type>test-jar</type>
 		</dependency>
 	</dependencies>
 
