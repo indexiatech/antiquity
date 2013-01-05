@@ -138,7 +138,6 @@ public class Range<T> {
 	 * @throws IllegalArgumentException
 	 *             if the value is null
 	 * @return ClassCastException if the specified value type doesn't implements {@code Comparable}
-	 * @see {#isNaturalOrdering()}
 	 */
 	public static <T extends Comparable<T>> Range<T> is(T value) {
 		return range(value, value, null);
@@ -220,7 +219,7 @@ public class Range<T> {
 	/**
 	 * Return the minimum edge of this range.
 	 * 
-	 * @return
+	 * @return the minimum edge of the range 
 	 */
 	public T min() {
 		return min;
@@ -229,7 +228,7 @@ public class Range<T> {
 	/**
 	 * Return the maximum edge of this range.
 	 * 
-	 * @return
+	 * @return the maximum edge of the range
 	 */
 	public T max() {
 		return max;
@@ -245,7 +244,6 @@ public class Range<T> {
 	 * </p>
 	 * 
 	 * @return the comparator being used, not null
-	 * @see {@link #isNaturalOrdering()}.
 	 * @see NaturalOrderingComparator
 	 */
 	public Comparator<T> getComparator() {

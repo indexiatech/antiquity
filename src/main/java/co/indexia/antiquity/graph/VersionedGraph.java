@@ -40,8 +40,8 @@ import co.indexia.antiquity.range.Range;
  * The underline graph must support transactions.
  * </p>
  * 
- * @see {@link Graph}
- * @see {@link TransactionalGraph}
+ * @see Graph
+ * @see TransactionalGraph
  */
 public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> extends EventGraph<T> implements GraphChangedListener {
 	/**
@@ -243,7 +243,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 * Graph latest version is stored in the graph version configuration vertex
 	 * <p>
 	 * 
-	 * @see {@link #getVersionConfVertex()}
+	 * @see #getVersionConfVertex()
 	 * 
 	 * @return The current graph version.
 	 */
@@ -284,13 +284,13 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	protected abstract V getMaxPossibleGraphVersion();
 
 	/**
-	 * Get the version configuration vertex.
+	 * Get the version configuration {@link Vertex}.
 	 * 
 	 * <p>
 	 * Configuration vertex is queried very often and recommended to be cached.
 	 * </p>
 	 * 
-	 * @return
+	 * @return The configuration vertex of the versioned graph.
 	 */
 	protected Vertex getVersionConfVertex() {
 		Vertex v = getBaseGraph().getVertex(GRAPH_CONF_VERTEX_ID);
