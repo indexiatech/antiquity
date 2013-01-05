@@ -18,7 +18,10 @@
  */
 package co.indexia.antiquity.graph;
 
+import java.util.Iterator;
 import java.util.Map;
+
+import org.neo4j.graphdb.NotFoundException;
 
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -27,6 +30,7 @@ import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ElementHelper;
+import com.tinkerpop.blueprints.util.wrappers.event.EventEdge;
 import com.tinkerpop.blueprints.util.wrappers.event.EventElement;
 import com.tinkerpop.blueprints.util.wrappers.event.EventGraph;
 import com.tinkerpop.blueprints.util.wrappers.event.EventVertex;
@@ -67,7 +71,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	public static final String GRAPH_CONF_VERTEX_ID = "VERSIONED_GRAPH_CONF_VERTEX";
 
 	/**
-	 * The label name of the edge which creates the chain of a vertex revisions 
+	 * The label name of the edge which creates the chain of a vertex revisions
 	 */
 	public static final String PREV_VERSION_CHAIN_EDGE_TYPE = "PREV_VERSION";
 
@@ -113,7 +117,8 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	/**
 	 * Raise an exception of the specified {@link Element} does not support events.
 	 * 
-	 * @param element The element to be checked
+	 * @param element
+	 *            The element to be checked
 	 */
 	private void raiseExceptionIfNotEventElement(Element element) {
 		if (!(element instanceof EventVertex)) {
@@ -126,8 +131,10 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	/**
 	 * Set a version range of the specified element.
 	 * 
-	 * @param versionedElement The element to set the version range.
-	 * @param range The version {@link Range}
+	 * @param versionedElement
+	 *            The element to set the version range.
+	 * @param range
+	 *            The version {@link Range}
 	 */
 	public void setVersion(Element versionedElement, Range<V> range)
 	{
@@ -138,42 +145,46 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	/**
 	 * Set the start version range of the specified element.
 	 * 
-	 * @param versionedElement The element to set the start version range.
-	 * @param startVersion The start version to set
+	 * @param versionedElement
+	 *            The element to set the start version range.
+	 * @param startVersion
+	 *            The start version to set
 	 */
 	public void setStartVersion(Element versionedElement, V startVersion)
 	{
-		//TODO: A more appropriate way to handle element types
+		// TODO: A more appropriate way to handle element types
 		Element e = versionedElement;
-		
+
 		if (versionedElement instanceof EventElement)
-			e = ((EventElement)versionedElement).getBaseElement();
-		
+			e = ((EventElement) versionedElement).getBaseElement();
+
 		e.setProperty(VALID_MIN_VERSION_PROP_KEY, startVersion);
 	}
 
 	/**
 	 * Set the end version range of the specified element.
 	 * 
-	 * @param versionedElement The element to set the end version range.
-	 * @param endVersion The end version to set
+	 * @param versionedElement
+	 *            The element to set the end version range.
+	 * @param endVersion
+	 *            The end version to set
 	 */
 	public void setEndVersion(Element versionedElement, V endVersion)
 	{
-		//TODO: A more appropriate way to handle element types
+		// TODO: A more appropriate way to handle element types
 		Element e = versionedElement;
-		
+
 		if (versionedElement instanceof EventElement)
-			e = ((EventElement)versionedElement).getBaseElement();
-		
-		
+			e = ((EventElement) versionedElement).getBaseElement();
+
 		e.setProperty(VALID_MAX_VERSION_PROP_KEY, endVersion);
 	}
 
 	/**
 	 * Get the start version of the specified element
 	 * 
-	 * @param versionedElement The element to get the start version.
+	 * @param versionedElement
+	 *            The element to get the start version.
 	 * @return The start version of the specified element.
 	 */
 	@SuppressWarnings("unchecked")
@@ -185,7 +196,8 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	/**
 	 * Get the end version of the specified element
 	 * 
-	 * @param versionedElement The element to get the end version.
+	 * @param versionedElement
+	 *            The element to get the end version.
 	 * @return The end version of the specified element.
 	 */
 	@SuppressWarnings("unchecked")
@@ -197,7 +209,8 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	/**
 	 * Get the version range of the specified element.
 	 * 
-	 * @param versionedElement The element to get the version range for.
+	 * @param versionedElement
+	 *            The element to get the version range for.
 	 * @return a {@link Range} of version of the specified element.
 	 */
 	public Range<V> getVersionRange(Element versionedElement) {
@@ -207,8 +220,10 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	/**
 	 * Determine whether the specified version is the start version of the specified element.
 	 * 
-	 * @param version The version to determine as the start of the version range.
-	 * @param versionedElement The element to check
+	 * @param version
+	 *            The version to determine as the start of the version range.
+	 * @param versionedElement
+	 *            The element to check
 	 * @return true if the specified version is the start version of the specified element.
 	 */
 	public boolean isStartVersion(V version, Element versionedElement) {
@@ -218,8 +233,10 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	/**
 	 * Determine whether the specified version is the end version of the specified element.
 	 * 
-	 * @param version The version to determine as the end of the version range.
-	 * @param versionedElement The element to check
+	 * @param version
+	 *            The version to determine as the end of the version range.
+	 * @param versionedElement
+	 *            The element to check
 	 * @return true if the specified version is the end version of the specified element.
 	 */
 	public boolean isEndVersion(V version, Element versionedElement) {
@@ -384,7 +401,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 */
 	private Vertex createHistoricalVertex(Vertex modifiedVertex, Map<String, Object> oldValues) {
 		// TODO: Auto identifier?
-		Vertex hv = getBaseGraph().addVertex(modifiedVertex.getId()+"-"+getNextGraphVersion());
+		Vertex hv = getBaseGraph().addVertex(modifiedVertex.getId() + "-" + getNextGraphVersion());
 		ElementHelper.copyProperties(modifiedVertex, hv);
 
 		for (Map.Entry<String, Object> prop : oldValues.entrySet())
@@ -420,21 +437,27 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 			Vertex newHistoricalVertex) {
 		Iterable<Edge> currEdges = modifiedVertex.getEdges(Direction.OUT, PREV_VERSION_CHAIN_EDGE_TYPE);
 
+		Iterator<Edge> currEdgesIterator = currEdges.iterator();
+
 		if (currEdges.iterator().hasNext()) {
-			Edge currEdge = currEdges.iterator().next();
-			if (currEdges.iterator().hasNext())
+			Edge currEdge = currEdgesIterator.next();
+			if (currEdgesIterator.hasNext())
 				throw new IllegalStateException("Multiple versioned edges in vertex chain exist");
 
 			// TODO: Edge id?
-			getBaseGraph().addEdge(null,
-					modifiedVertex,
-					currEdges.iterator().next().getVertex(Direction.OUT),
+			Edge e = getBaseGraph().addEdge(null,
+					newHistoricalVertex,
+					((EventVertex) currEdge.getVertex(Direction.IN)).getBaseVertex(),
 					PREV_VERSION_CHAIN_EDGE_TYPE);
-			getBaseGraph().removeEdge(currEdge);
+
+			getBaseGraph().removeEdge((currEdge instanceof EventEdge) ? ((EventEdge) currEdge).getBaseEdge() : currEdge);
 		}
 
 		// TODO: Edge id?
-		getBaseGraph().addEdge(null, newHistoricalVertex, ((EventVertex)modifiedVertex).getBaseVertex(), PREV_VERSION_CHAIN_EDGE_TYPE);
+		getBaseGraph().addEdge(null,
+				((EventVertex) modifiedVertex).getBaseVertex(),
+				newHistoricalVertex,
+				PREV_VERSION_CHAIN_EDGE_TYPE);
 		setStartVersion(newHistoricalVertex, getStartVersion(modifiedVertex));
 		setEndVersion(newHistoricalVertex, latestGraphVersion);
 		setStartVersion(modifiedVertex, newVersion);
@@ -463,5 +486,42 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		addHistoricalVertexInChain(latestGraphVersion, newVersion, vertex, historicalV);
 
 		return historicalV;
+	}
+
+	/**
+	 * Get the relevant vertex revision from the history for the specified vertex and version.
+	 * 
+	 * @param vertex
+	 *            The vertex to find the appropriate version for
+	 * @param version
+	 *            The version to find the revision for
+	 * @return A vertex revision for the specified version
+	 * @throws NotFoundException
+	 *             In case no vertex revision was found for the specified vertex and version
+	 */
+	public Vertex getVertexForVersion(Vertex vertex, V version) {
+		Range<V> verRange = getVersionRange(vertex);
+
+		System.out.println(String.format("Finding vertex[%s] in revision history for version [%s].", vertex, version));
+
+		System.out.println(String.format("Is vertex [%s] with range [%s] contains version [%s]?",
+				vertex,
+				verRange,
+				version));
+		if (!verRange.contains(version)) {
+			System.out.println("No, finding previous vertex version");
+			Iterable<Edge> prevVerEdges = vertex.getEdges(Direction.OUT, PREV_VERSION_CHAIN_EDGE_TYPE);
+
+			if (!prevVerEdges.iterator().hasNext()) {
+				throw new NotFoundException(String.format("Cannot find vertex %s in revision history for version [%s].",
+						vertex,
+						version));
+			}
+
+			Edge edge = prevVerEdges.iterator().next();
+			return getVertexForVersion(edge.getVertex(Direction.IN), version);
+		}
+
+		return vertex;
 	}
 }
