@@ -25,7 +25,7 @@ import java.util.Comparator;
  * 
  * Used when no {@link Comparator} is specified when instantiating a {@link RangeTest} object.
  * 
- * @see {@link RangeTest}
+ * @see RangeTest
  */
 @SuppressWarnings("rawtypes")
 public enum NaturalOrderingComparator implements Comparator {
@@ -41,7 +41,7 @@ public enum NaturalOrderingComparator implements Comparator {
 	 * @return a negative integer, zero, or a positive integer as the first argument is less than, equal to, or greater
 	 *         than the second.
 	 * 
-	 * @see {@link Comparable#compareTo()}
+	 * @see Comparable#compareTo(Object)
 	 */
 	@SuppressWarnings("unchecked")
 	@Override

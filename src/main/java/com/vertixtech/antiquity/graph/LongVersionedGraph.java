@@ -26,8 +26,8 @@ import com.tinkerpop.blueprints.Graph;
  *  
  * @param <T> The type of the underline graph
  * 
- * @see {@link NonTransactionalVersionedGraph}
- * @see {@link Long}
+ * @see NonTransactionalVersionedGraph
+ * @see Long
  */
 public class LongVersionedGraph<T extends Graph> extends NonTransactionalVersionedGraph<T, Long> {
 
