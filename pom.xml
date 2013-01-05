@@ -49,31 +49,11 @@
 			<groupId>com.tinkerpop.blueprints</groupId>
 			<artifactId>blueprints-neo4j-graph</artifactId>
 			<version>${tinkerpop-blueprints-neo4j.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.neo4j</groupId>
-					<artifactId>neo4j</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.neo4j</groupId>
-					<artifactId>neo4j-ha</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.neo4j</groupId>
-					<artifactId>neo4j-management</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>org.neo4j</groupId>
-			<artifactId>neo4j</artifactId>
-			<version>${neo4j.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.neo4j</groupId>
-			<artifactId>neo4j-kernel</artifactId>
-			<version>${neo4j.version}</version>
-			<type>test-jar</type>
+			<groupId>com.tinkerpop.blueprints</groupId>
+			<artifactId>blueprints-test</artifactId>
+			<version>${tinkerpop-blueprints-neo4j.version}</version>
 		</dependency>
 	</dependencies>
 
