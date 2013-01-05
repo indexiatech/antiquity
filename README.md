@@ -1,8 +1,9 @@
 antiquity
 =========
 
-Antiquity - A graph versioning support.
+Antiquity - A versioned graph.
 
-Antiquity provides history support for graph vertices and edges by extending the standard behavior of persistancy operations such as adding, modifying and removing graph elements.
+Antiquity is a versioned graph with full history support for graph elements.
 
-Antiquity is based on Tinkerpop Blueprints project in order to abstract the graph db negotiation and support verious graph engines.
+Antiquity is not tight to any specific graph database, this is achieved by using 
+Tinkerpop Blueprints project (http://blueprints.tinkerpop.com) which provides an abstraction layer for graph underlines.
