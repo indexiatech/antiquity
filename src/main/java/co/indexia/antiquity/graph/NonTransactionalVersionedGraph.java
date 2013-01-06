@@ -22,6 +22,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.Vertex;
@@ -35,6 +38,8 @@ import com.tinkerpop.blueprints.Vertex;
  *            The type of the graph version
  */
 public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends Comparable<V>> extends VersionedGraph<T, V> {
+	Logger log = LoggerFactory.getLogger(NonTransactionalVersionedGraph.class);
+	
 	public NonTransactionalVersionedGraph(T baseGraph) {
 		super(baseGraph);
 	}
@@ -43,17 +48,17 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 	// --------------------------------------------------------------
 	@Override
 	public void vertexAdded(Vertex vertex) {
-		System.out.println(String.format("==Vertex [%s] added==", vertex));
+		log.debug("==Vertex [{}] added==", vertex);
 		versionAddedVertices(getNextGraphVersion(), Arrays.asList(vertex));
 	}
 
 	@Override
 	public void vertexPropertyChanged(Vertex vertex, String key, Object oldValue, Object setValue) {
-		System.out.println(String.format("==Vertex [%s] property[%s] was modified [%s -> %s]==",
+		log.debug("==Vertex [{}] property[{}] was modified [{} -> {}]==",
 				vertex,
 				key,
 				oldValue,
-				setValue));
+				setValue);
 
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put(key, oldValue);
@@ -63,7 +68,7 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 
 	@Override
 	public void vertexPropertyRemoved(Vertex vertex, String key, Object removedValue) {
-		System.out.println(String.format("==Vertex property [%s] was removed [%s->%s]==", vertex, removedValue));
+		log.debug("==Vertex property [{}] was removed [{}->{}]==", vertex, removedValue);
 
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put(key, removedValue);
@@ -73,13 +78,13 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 
 	@Override
 	public void vertexRemoved(Vertex vertex) {
-		System.out.println(String.format("==Vertex [%s] removed==", vertex));
+		log.debug("==Vertex [{}] removed==", vertex);
 		versionRemovedVertices(getNextGraphVersion(), Arrays.asList(vertex));
 	}
 
 	@Override
 	public void edgeAdded(Edge edge) {
-		System.out.println(String.format("==Edge [%s] added==", edge));
+		log.debug("==Edge [{}] added==", edge);
 		versionAddedEdges(getNextGraphVersion(), Arrays.asList(edge));
 	}
 
@@ -95,7 +100,7 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 
 	@Override
 	public void edgeRemoved(Edge edge) {
-		System.out.println(String.format("==Edge [%s] removed==", edge));
+		log.debug("==Edge [{}] removed==", edge);
 		versionRemovedEdges(getNextGraphVersion(), Arrays.asList(edge));
 	}
 }
