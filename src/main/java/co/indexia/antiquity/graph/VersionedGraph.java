@@ -50,9 +50,8 @@ import co.indexia.antiquity.range.Range;
  * @see TransactionalGraph
  */
 public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> extends EventGraph<T> implements GraphChangedListener {
-    Logger log = LoggerFactory.getLogger(VersionedGraph.class);
+	Logger log = LoggerFactory.getLogger(VersionedGraph.class);
 
-    
 	/**
 	 * The property key which stores the last graph version
 	 */
@@ -157,13 +156,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 */
 	public void setStartVersion(Element versionedElement, V startVersion)
 	{
-		// TODO: A more appropriate way to handle element types
-		Element e = versionedElement;
-
-		if (versionedElement instanceof EventElement)
-			e = ((EventElement) versionedElement).getBaseElement();
-
-		e.setProperty(VALID_MIN_VERSION_PROP_KEY, startVersion);
+		setVersion(StartOrEnd.START, versionedElement, startVersion);
 	}
 
 	/**
@@ -174,15 +167,32 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 * @param endVersion
 	 *            The end version to set
 	 */
-	public void setEndVersion(Element versionedElement, V endVersion)
-	{
+	public void setEndVersion(Element versionedElement, V endVersion) {
+		setVersion(StartOrEnd.END, versionedElement, endVersion);
+	}
+
+	/**
+	 * An enum which indicates the start or the end edges of a range. 
+	 */
+	enum StartOrEnd {
+		START,
+		END
+	}
+
+	/**
+	 * Set the start or end version of the element
+	 * @param startOrEnd Whether to set the start or the end of the version range.
+	 * @param versionedElement The graph {@link Element} to set the version for
+	 * @param version The version to set
+	 */
+	public void setVersion(StartOrEnd startOrEnd, Element versionedElement, V version) {
 		// TODO: A more appropriate way to handle element types
-		Element e = versionedElement;
+		Element e = getNonEventElement(versionedElement);
 
-		if (versionedElement instanceof EventElement)
-			e = ((EventElement) versionedElement).getBaseElement();
-
-		e.setProperty(VALID_MAX_VERSION_PROP_KEY, endVersion);
+		if (startOrEnd == StartOrEnd.START)
+			e.setProperty(VALID_MIN_VERSION_PROP_KEY, version);
+		else
+			e.setProperty(VALID_MAX_VERSION_PROP_KEY, version);
 	}
 
 	/**
@@ -369,17 +379,17 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		}
 	}
 
-	protected void versionRemovedVertices(V version, Iterable<Vertex> vertices) {
+	protected void versionRemovedVertices(V nextVer, V maxVer, Iterable<Vertex> vertices) {
 		for (Vertex v : vertices) {
-			v.setProperty(REMOVED_PROP_KEY, getNextGraphVersion());
-			v.setProperty(VALID_MAX_VERSION_PROP_KEY, getLatestGraphVersion());
+			getNonEventElement(v).setProperty(REMOVED_PROP_KEY, nextVer);
+			getNonEventElement(v).setProperty(VALID_MAX_VERSION_PROP_KEY, maxVer);
 		}
 	}
 
-	protected void versionRemovedEdges(V version, Iterable<Edge> edges) {
+	protected void versionRemovedEdges(V nextVer, V maxVer, Iterable<Edge> edges) {
 		for (Edge e : edges) {
-			e.setProperty(REMOVED_PROP_KEY, getNextGraphVersion());
-			e.setProperty(VALID_MAX_VERSION_PROP_KEY, getLatestGraphVersion());
+			getNonEventElement(e).setProperty(REMOVED_PROP_KEY, nextVer);
+			getNonEventElement(e).setProperty(VALID_MAX_VERSION_PROP_KEY, maxVer);
 		}
 	}
 
@@ -406,7 +416,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 */
 	private Vertex createHistoricalVertex(Vertex modifiedVertex, Map<String, Object> oldValues) {
 		// TODO: Auto identifier?
-		Vertex hv = getBaseGraph().addVertex(modifiedVertex.getId() + "-" + getNextGraphVersion());
+		Vertex hv = getBaseGraph().addVertex(modifiedVertex.getId() + "-" + getLatestGraphVersion());
 		ElementHelper.copyProperties(modifiedVertex, hv);
 
 		for (Map.Entry<String, Object> prop : oldValues.entrySet())
@@ -509,7 +519,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 
 		log.trace("Finding vertex[{}] in revision history for version [{}].", vertex, version);
 		log.trace("Is vertex [{}] with range [{}] contains version [{}]?", vertex, verRange, version);
-		
+
 		if (!verRange.contains(version)) {
 			log.trace("No, seeking for previous vertex version");
 			Iterable<Edge> prevVerEdges = vertex.getEdges(Direction.OUT, PREV_VERSION_CHAIN_EDGE_TYPE);
@@ -526,5 +536,15 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 
 		log.trace("Found vertex[{}] in revision history for version [{}].", vertex, version);
 		return vertex;
+	}
+	
+	// Utils
+	//--------------------------------------------------------------
+	private <G extends Element> G getNonEventElement(G element) {
+		if (element instanceof EventElement) {
+			return (G) ((EventElement)element).getBaseElement();
+		} else {
+			return element;
+		}
 	}
 }

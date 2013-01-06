@@ -79,7 +79,8 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 	@Override
 	public void vertexRemoved(Vertex vertex) {
 		log.debug("==Vertex [{}] removed==", vertex);
-		versionRemovedVertices(getNextGraphVersion(), Arrays.asList(vertex));
+		V last = getLatestGraphVersion();
+		versionRemovedVertices(getNextGraphVersion(), last, Arrays.asList(vertex));
 	}
 
 	@Override
@@ -101,6 +102,7 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 	@Override
 	public void edgeRemoved(Edge edge) {
 		log.debug("==Edge [{}] removed==", edge);
-		versionRemovedEdges(getNextGraphVersion(), Arrays.asList(edge));
+		V last = getLatestGraphVersion();
+		versionRemovedEdges(getNextGraphVersion(), last, Arrays.asList(edge));
 	}
 }
