@@ -22,6 +22,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.neo4j.graphdb.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -48,6 +50,9 @@ import co.indexia.antiquity.range.Range;
  * @see TransactionalGraph
  */
 public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> extends EventGraph<T> implements GraphChangedListener {
+    Logger log = LoggerFactory.getLogger(VersionedGraph.class);
+
+    
 	/**
 	 * The property key which stores the last graph version
 	 */
@@ -502,14 +507,11 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	public Vertex getVertexForVersion(Vertex vertex, V version) {
 		Range<V> verRange = getVersionRange(vertex);
 
-		System.out.println(String.format("Finding vertex[%s] in revision history for version [%s].", vertex, version));
-
-		System.out.println(String.format("Is vertex [%s] with range [%s] contains version [%s]?",
-				vertex,
-				verRange,
-				version));
+		log.trace("Finding vertex[{}] in revision history for version [{}].", vertex, version);
+		log.trace("Is vertex [{}] with range [{}] contains version [{}]?", vertex, verRange, version);
+		
 		if (!verRange.contains(version)) {
-			System.out.println("No, finding previous vertex version");
+			log.trace("No, seeking for previous vertex version");
 			Iterable<Edge> prevVerEdges = vertex.getEdges(Direction.OUT, PREV_VERSION_CHAIN_EDGE_TYPE);
 
 			if (!prevVerEdges.iterator().hasNext()) {
@@ -522,6 +524,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 			return getVertexForVersion(edge.getVertex(Direction.IN), version);
 		}
 
+		log.trace("Found vertex[{}] in revision history for version [{}].", vertex, version);
 		return vertex;
 	}
 }
