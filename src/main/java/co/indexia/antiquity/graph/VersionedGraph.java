@@ -78,6 +78,13 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 * The label name of the edge which creates the chain of a vertex revisions
 	 */
 	public static final String PREV_VERSION_CHAIN_EDGE_TYPE = "PREV_VERSION";
+	
+	/**
+	 * An element property key which indicates whether the element is for historical purposes or not.
+	 * 
+	 * Historical elements are elements which were created for audit purposes and are not the active/alive data.
+	 */
+	public static final String HISTORIC_ELEMENT_PROP_KEY = "__HISTORIC__";
 
 	/**
 	 * The next version of the graph to be committed.
@@ -359,6 +366,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		Range<V> range = Range.range(version, getMaxPossibleGraphVersion());
 
 		for (Vertex v : vertices) {
+			getNonEventElement(v).setProperty(HISTORIC_ELEMENT_PROP_KEY, false);
 			setVersion(v, range);
 		}
 	}
@@ -402,7 +410,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 */
 	private boolean isPropertyInternal(String key) {
 		return (LATEST_GRAPH_VERSION_PROP_KEY.equals(key) || (REMOVED_PROP_KEY.equals(key))
-				|| (VALID_MIN_VERSION_PROP_KEY.equals(key)) || (VALID_MAX_VERSION_PROP_KEY.equals(key)));
+				|| (VALID_MIN_VERSION_PROP_KEY.equals(key)) || (VALID_MAX_VERSION_PROP_KEY.equals(key)) || (HISTORIC_ELEMENT_PROP_KEY.equals(key)));
 	}
 
 	/**
@@ -417,7 +425,13 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	private Vertex createHistoricalVertex(Vertex modifiedVertex, Map<String, Object> oldValues) {
 		// TODO: Auto identifier?
 		Vertex hv = getBaseGraph().addVertex(modifiedVertex.getId() + "-" + getLatestGraphVersion());
-		ElementHelper.copyProperties(modifiedVertex, hv);
+		hv.setProperty(HISTORIC_ELEMENT_PROP_KEY, true);
+		
+		//ElementHelper.copyProperties(modifiedVertex, hv);
+		for (final String key : modifiedVertex.getPropertyKeys()) {
+			if (isPropertyInternal(key)) continue;
+			hv.setProperty(key, modifiedVertex.getProperty(key));
+        }
 
 		for (Map.Entry<String, Object> prop : oldValues.entrySet())
 		{
