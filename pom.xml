@@ -31,6 +31,7 @@
 		<jdk.version>1.6</jdk.version>
 		<tinkerpop-blueprints-neo4j.version>2.3.0-SNAPSHOT</tinkerpop-blueprints-neo4j.version>
 		<neo4j.version>1.8.1</neo4j.version>
+		<slf4j.version>1.7.2</slf4j.version>
 
 		<junit.version>4.10</junit.version>
 		<maven-compiler-plugin.version>2.5.1</maven-compiler-plugin.version>
@@ -54,6 +55,12 @@
 			<groupId>com.tinkerpop.blueprints</groupId>
 			<artifactId>blueprints-test</artifactId>
 			<version>${tinkerpop-blueprints-neo4j.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
 		</dependency>
 	</dependencies>
 
