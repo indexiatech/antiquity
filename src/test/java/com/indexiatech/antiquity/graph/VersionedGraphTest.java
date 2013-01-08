@@ -182,6 +182,48 @@ public class VersionedGraphTest extends GraphTest {
 		assertEquals(0, Lists.newArrayList(vv6.getEdges(Direction.OUT,"V1_TO_V2")).size());
 	}
 	
+	public void testEmptyVerticesPrivateHash() {
+		VersionedVertex<Long> v1 = (VersionedVertex)graph.addVertex("v1");
+		String hashOfEmptyVer1 = v1.calculatePrivateHash();
+		VersionedVertex<Long> v2 = (VersionedVertex)graph.addVertex("v2");
+		String hashOfEmptyVer2 = v1.calculatePrivateHash();
+		assertNotSame(hashOfEmptyVer1, hashOfEmptyVer2);
+		graph.getBaseGraph().removeVertex(v1.getBaseVertex());
+		VersionedVertex<Long> v1New = (VersionedVertex)graph.addVertex("v1");
+		assertEquals(v1, v1New);
+	}
+	
+	public void testVerticesWithPropsPrivateHash() {
+		VersionedVertex<Long> v1 = (VersionedVertex)graph.addVertex("v1");
+		v1.setProperty("keyFoo", "foo");
+		v1.setProperty("keyBar", "bar");
+		v1.setProperty("keyBaz", "baz");
+		String v1HashWith3Props = v1.calculatePrivateHash();
+		graph.getBaseGraph().removeVertex(v1.getBaseVertex());
+		
+		VersionedVertex<Long> v2 = (VersionedVertex)graph.addVertex("v2");
+		v2.setProperty("keyFoo", "foo");
+		v2.setProperty("keyBar", "bar");
+		v2.setProperty("keyBaz", "baz");
+		String v2HashWith3Props = v2.calculatePrivateHash();
+		graph.getBaseGraph().removeVertex(v2.getBaseVertex());
+		assertNotSame(v1HashWith3Props, v2HashWith3Props);
+		
+	
+		VersionedVertex<Long> v1New = (VersionedVertex)graph.addVertex("v1");
+		v1New.setProperty("keyFoo", "foo");
+		v1New.setProperty("keyBar", "bar");
+		v1New.setProperty("keyBaz", "baz");
+		v1New.setProperty("keyQux", "qux");
+		assertNotSame(v1HashWith3Props, v1New.calculatePrivateHash());
+		
+		v1New.getBaseVertex().removeProperty("keyQux");
+		assertEquals(v1HashWith3Props, v1New.calculatePrivateHash());
+	}
+	
+	
+
+	
 	private String getGraphNodesString() {
 		StringBuffer graphStr = new StringBuffer();
 		for (Vertex v : graph.getVertices()) {

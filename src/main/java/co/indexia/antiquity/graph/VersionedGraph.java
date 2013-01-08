@@ -480,7 +480,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		// ElementHelper.copyProperties(modifiedVertex, hv);
 		//Iterate on the base prop keys as we'r currently working on an active vertex
 		for (final String key : modifiedVertex.getBaseElement().getPropertyKeys()) {
-			if (isPropertyInternal(key))
+			if (isInternalProperty(key))
 				continue;
 			hv.setProperty(key, modifiedVertex.getBaseElement().getProperty(key));
 		}
@@ -526,7 +526,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 				throw new IllegalStateException("Multiple versioned edges in vertex chain exist");
 
 			// TODO: Edge id?
-			Edge e = getBaseGraph().addEdge(null,
+			getBaseGraph().addEdge(null,
 				newHistoricalVertex,
 				currEdge.getVertex(Direction.IN),
 				PREV_VERSION_CHAIN_EDGE_TYPE);
@@ -584,7 +584,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	public Vertex getVertexForVersion(Vertex vertex, V version) {
 		//TODO: Find a better approach to force versioning for vertex versions.
 		if (vertex instanceof VersionedVertex)
-			((VersionedVertex)vertex).setVersion(version);
+			((VersionedVertex)vertex).setForVersion(version);
 		
 		Range<V> verRange = getVersionRange(vertex);
 
@@ -617,15 +617,15 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 * 
 	 * A null will be returned if property doesn't exist for the specified {@link VersionedVertex} in its set version.
 	 *
-	 * @see VersionedVertex#getVersion()
+	 * @see VersionedVertex#getForVersion()
 	 * @param vertex The {@link VersionedVertex} to get the property value of.
 	 * @param key The proeprty key
 	 * @return The value of the specified property key for the specified @{link {@link VersionedVertex} or null if not found.
 	 */
 	public Object getProperty(VersionedVertex<V> vertex, String key) {
 		try {
-			log.debug("Getting property [{}] for vertex [{}] for version [{}]", key, vertex, vertex.getVersion());
-			Vertex v = getVertexForVersion(vertex, vertex.getVersion());
+			log.debug("Getting property [{}] for vertex [{}] for version [{}]", key, vertex, vertex.getForVersion());
+			Vertex v = getVertexForVersion(vertex, vertex.getForVersion());
 			//Return the value from the base element
 			return getNonEventElement(v).getProperty(key);
 		}catch(NotFoundException e) {
@@ -635,7 +635,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	
 	public Set<String> getPropertyKeys(VersionedVertex<V> vertex) {
 		try {
-			Vertex v = getVertexForVersion(vertex, vertex.getVersion());
+			Vertex v = getVertexForVersion(vertex, vertex.getForVersion());
 			//Return the keys from the base element
 			return getNonEventElement(v).getPropertyKeys();
 		}catch(NotFoundException e) {
@@ -646,8 +646,10 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	// Internal Utils
 	// --------------------------------------------------------------
 	/**
-	 * @param element
-	 * @return
+	 * If the specified element supports Events, then return its base element.
+	 * 
+	 * @param element The element to check whether it supports Events or not.
+	 * @return If the specified element supports Events, then return its base element.
 	 */
 	@SuppressWarnings("unchecked")
 	private <G extends Element> G getNonEventElement(G element) {
@@ -677,7 +679,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 *            The property key to determine
 	 * @return true if property is for internal usage only
 	 */
-	private boolean isPropertyInternal(String key) {
+	public boolean isInternalProperty(String key) {
 		return (LATEST_GRAPH_VERSION_PROP_KEY.equals(key) || (REMOVED_PROP_KEY.equals(key))
 				|| (VALID_MIN_VERSION_PROP_KEY.equals(key)) || (VALID_MAX_VERSION_PROP_KEY.equals(key)) || (HISTORIC_ELEMENT_PROP_KEY.equals(key)));
 	}
