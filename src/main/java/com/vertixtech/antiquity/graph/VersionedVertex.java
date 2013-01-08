@@ -21,9 +21,9 @@ package com.vertixtech.antiquity.graph;
 import java.util.List;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
@@ -36,20 +36,20 @@ import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListene
  */
 public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 	private VersionedGraph<?,V> graph;
-	private V version;
+	private V forVersion;
 
 	protected VersionedVertex(Vertex rawVertex, List<GraphChangedListener> graphChangedListeners, EventTrigger trigger, VersionedGraph<?,V> graph, V version) {
 		super(rawVertex, graphChangedListeners, trigger);
 		this.graph = graph;
-		this.version = version;
+		this.forVersion = version;
 	}
 
 	public Iterable<Edge> getEdges(final Direction direction, final String... labels) {
-        return new VersionedEdgeIterable<V>(((Vertex) this.baseElement).getEdges(direction, labels), this.graphChangedListeners, trigger, graph, version);
+        return new VersionedEdgeIterable<V>(((Vertex) this.baseElement).getEdges(direction, labels), this.graphChangedListeners, trigger, graph, forVersion);
     }
 	
 	public Iterable<Vertex> getVertices(final Direction direction, final String... labels) {
-        return new VersionedVertexIterable<V>(((Vertex) this.baseElement).getVertices(direction, labels), this.graphChangedListeners, trigger, graph, version);
+        return new VersionedVertexIterable<V>(((Vertex) this.baseElement).getVertices(direction, labels), this.graphChangedListeners, trigger, graph, forVersion);
     }
 	
 	public Object getProperty(String key) {
@@ -60,11 +60,46 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 		return graph.getPropertyKeys(this);  
 	}
 	
-	public V getVersion() {
-		return this.version;
+	/**
+	 * Get the forVersion property of the vertex.
+	 * 
+	 * This property defines the version context of the vertex,
+	 * Properties and edges will be filtered according to the set version. 
+	 * 
+	 * @return The current version bound to the vertex
+	 */
+	public V getForVersion() {
+		return this.forVersion;
 	}
 	
-	public void setVersion(V version) {
-		this.version = version;
+	/**
+	 * The forVersion property of the vertex
+	 * 
+	 * @see #getForVersion()
+	 * @param forVersion The forVersion property
+	 */
+	public void setForVersion(V forVersion) {
+		this.forVersion = forVersion;
+	}
+	
+	/**
+	 * Calculate the private hash of the vertex
+	 * 
+	 * <p>Hash is calculated based on SHA1 algorithm</p>
+	 * 
+	 * @return A string representation of the hash
+	 * @see Hasher#toString()
+	 */
+	public String calculatePrivateHash() {
+		HashFunction hf = Hashing.sha1();
+		Hasher h = hf.newHasher();
+		
+		h.putString("["+getId().toString()+"]");
+		for (String p : getBaseElement().getPropertyKeys()) {
+			if (graph.isInternalProperty(p)) continue;
+			h.putString(p+"->"+getBaseElement().getProperty(p));
+		};
+		
+		return h.hash().toString();
 	}
 }
