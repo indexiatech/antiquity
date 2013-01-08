@@ -20,7 +20,12 @@ package co.indexia.antiquity.graph;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import com.google.common.collect.Lists;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Graph;
@@ -83,7 +88,6 @@ public class VersionedGraphTest extends GraphTest {
 		
 		assertEquals(Range.range(fooVVer2, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(fooVLoaded));
 		assertEquals(Range.range(barVVer2, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(barVLoaded));
-		
 	}
 	
 	public void testAddingNewVersionedEdges() {
@@ -128,16 +132,60 @@ public class VersionedGraphTest extends GraphTest {
 		getVertexChain(chain, v);
 		assertEquals(5, chain.size());
 		
+		//Compare via getId() and not via EventElement.equals coz class types might be different (HistoricalVertex/VersionedVertex)
 		assertEquals(chain.get(0), v);
-		assertEquals(chain.get(1), graph.getVertexForVersion(v, bazVersion));
-		assertEquals(chain.get(2), graph.getVertexForVersion(v, barVersion));
-		assertEquals(chain.get(3), graph.getVertexForVersion(v, fooVersion));
-		assertEquals(chain.get(4), graph.getVertexForVersion(v, emptyVersion));
+		assertEquals(chain.get(1).getId(), graph.getVertexForVersion(v, bazVersion).getId());
+		assertEquals(chain.get(2).getId(), graph.getVertexForVersion(v, barVersion).getId());
+		assertEquals(chain.get(3).getId(), graph.getVertexForVersion(v, fooVersion).getId());
+		assertEquals(chain.get(4).getId(), graph.getVertexForVersion(v, emptyVersion).getId());
+	}
+	
+	public void testVersionedVertexEdges() {
+		Vertex vertex1 = graph.addVertex("vertex1");
+		Vertex vertex2 = graph.addVertex("vertex2");
+		Long verAfterVerticesCreation = graph.getLatestGraphVersion();
+		vertex1.setProperty("key1", "foo");
+		vertex2.setProperty("key2", "foo");
+		Long verBeforeEdges = graph.getLatestGraphVersion();
+		Edge e1 = graph.addEdge("v1v2_1", vertex1, vertex2, "V1_TO_V2");
+		Long verAfterEdge1 = graph.getLatestGraphVersion();
+		Edge e2 = graph.addEdge("v1v2_2", vertex1, vertex2, "V1_TO_V2");
+		Long verAfterEdge2 = graph.getLatestGraphVersion();
+		graph.removeEdge(e1);
+		Long verAfterDelOfE1 = graph.getLatestGraphVersion();
+		graph.removeEdge(e2);
+		Long verAfterDelOfBothEdges = graph.getLatestGraphVersion();
+		
+		Vertex vv1 = graph.getVertexForVersion(vertex1,verAfterVerticesCreation);
+		Vertex vv2 = graph.getVertexForVersion(vertex1,verBeforeEdges);
+		assertEquals(0, Lists.newArrayList(vv2.getEdges(Direction.OUT,"V1_TO_V2")).size());
+		Vertex vv3 = graph.getVertexForVersion(vertex1,verAfterEdge1);
+		assertEquals(1, Lists.newArrayList(vv2.getEdges(Direction.OUT,"V1_TO_V2")).size());
+		assertEquals(e1.getId(), Lists.newArrayList(vv2.getEdges(Direction.OUT,"V1_TO_V2")).get(0).getId());
+		Vertex vv4 = graph.getVertexForVersion(vertex1,verAfterEdge2);
+		
+		//TODO: Compare via ID until Element.equals is overriden and ignores class type comparison
+		Set<Object> realIds = new HashSet<Object>(); 
+		realIds.add(e1.getId());
+		realIds.add(e2.getId());
+		List<Edge> loadedEdges = Lists.newArrayList(vv2.getEdges(Direction.OUT,"V1_TO_V2"));
+		Set<Object> loadedIds = new HashSet<Object>();
+		for (Edge e : loadedEdges)
+			loadedIds.add(e.getId());
+		assertEquals(realIds, loadedIds);
+		
+		Vertex vv5 = graph.getVertexForVersion(vertex1,verAfterDelOfE1);
+		assertEquals(1, Lists.newArrayList(vv5.getEdges(Direction.OUT,"V1_TO_V2")).size());
+		assertEquals(e2.getId(), Lists.newArrayList(vv5.getEdges(Direction.OUT,"V1_TO_V2")).get(0).getId());
+		
+		Vertex vv6 = graph.getVertexForVersion(vertex1,verAfterDelOfBothEdges);
+		assertEquals(0, Lists.newArrayList(vv6.getEdges(Direction.OUT,"V1_TO_V2")).size());
 	}
 	
 	private String getGraphNodesString() {
 		StringBuffer graphStr = new StringBuffer();
 		for (Vertex v : graph.getVertices()) {
+			if (v.getId().equals(graph.getVersionConfVertex().getId())) continue;
 			graphStr.append("Vertex [" +  v.getId() + "]");
 			
 			for (String key : v.getPropertyKeys()) {

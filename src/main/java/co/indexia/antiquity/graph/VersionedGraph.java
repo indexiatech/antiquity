@@ -20,8 +20,8 @@ package co.indexia.antiquity.graph;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
-import org.neo4j.graphdb.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,13 +31,13 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.wrappers.event.EventEdge;
 import com.tinkerpop.blueprints.util.wrappers.event.EventElement;
 import com.tinkerpop.blueprints.util.wrappers.event.EventGraph;
 import com.tinkerpop.blueprints.util.wrappers.event.EventVertex;
 import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListener;
 import co.indexia.antiquity.range.Range;
+import co.indexia.antiquity.utils.ExceptionFactory;
 
 /**
  * Versioned graph implementation,
@@ -78,7 +78,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 * The label name of the edge which creates the chain of a vertex revisions
 	 */
 	public static final String PREV_VERSION_CHAIN_EDGE_TYPE = "PREV_VERSION";
-	
+
 	/**
 	 * An element property key which indicates whether the element is for historical purposes or not.
 	 * 
@@ -112,30 +112,86 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	// Operation Overrides
 	// --------------------------------------------------------------
 	@Override
+	public Vertex addVertex(final Object id) {
+		 final Vertex vertex = this.baseGraph.addVertex(id);
+		 if (vertex == null) {
+			 return null;
+		 } else {
+			 this.onVertexAdded(vertex);
+			 return new VersionedVertex<V>(vertex, this.graphChangedListeners, this.trigger, this, getLatestGraphVersion());
+		 }
+	}
+	
+	@Override
+	public Vertex getVertex(final Object id) {
+		return getVertex(id, getLatestGraphVersion());
+    }
+	
+	@Override
+	public Iterable<Vertex> getVertices() {
+        return getVertices(getLatestGraphVersion());
+    }
+
+	@Override
+    public Iterable<Vertex> getVertices(final String key, final Object value) {
+        return getVertices(key, value, getLatestGraphVersion());
+    }
+	
+	@Override
+	public Iterable<Edge> getEdges() {
+		return getEdges(getLatestGraphVersion());
+	}
+
+	@Override
+	public Iterable<Edge> getEdges(final String key, final Object value) {
+		return getEdges(key, value, getLatestGraphVersion());
+	}
+	
+	@Override
 	public void removeVertex(final Vertex vertex) {
-		raiseExceptionIfNotEventElement(vertex);
+		raiseExceptionIfNotVersionedElement(vertex);
 
 		this.onVertexRemoved(vertex);
 	}
 
 	@Override
 	public void removeEdge(final Edge edge) {
-		raiseExceptionIfNotEventElement(edge);
+		raiseExceptionIfNotVersionedElement(edge);
 
 		this.onEdgeRemoved(edge);
 	}
+	
+	// Enhanced methods for the standard blueprint graph API
+	//------------------------------------------------------
+	public Vertex getVertex(final Object id, V version) {
+        final Vertex vertex = this.baseGraph.getVertex(id);
+        if (vertex == null) {
+            return null;
+        } else {
+        	if (isHistoricalOrInternal(vertex)) {
+        		return vertex;
+        	} else {
+        		return new VersionedVertex<V>(vertex, this.graphChangedListeners, this.trigger, this, version);
+        	}
+        }
+    }
+	
+	public Iterable<Vertex> getVertices(V version) {
+        return new VersionedVertexIterable<V>(this.baseGraph.getVertices(), this.graphChangedListeners, this.trigger, this, version);
+    }
 
-	/**
-	 * Raise an exception of the specified {@link Element} does not support events.
-	 * 
-	 * @param element
-	 *            The element to be checked
-	 */
-	private void raiseExceptionIfNotEventElement(Element element) {
-		if (!(element instanceof EventVertex)) {
-			throw new IllegalArgumentException(String.format("Element [%s] does not support events.", element));
-		}
+    public Iterable<Vertex> getVertices(final String key, final Object value, V version) {
+        return new VersionedVertexIterable<V>(this.baseGraph.getVertices(key, value), this.graphChangedListeners, this.trigger, this, version);
+    }
+	
+	public Iterable<Edge> getEdges(V version) {
+		return new VersionedEdgeIterable<V>(this.baseGraph.getEdges(), this.graphChangedListeners, this.trigger, this, version);
 	}
+
+	public Iterable<Edge> getEdges(final String key, final Object value, V version) {
+		return new VersionedEdgeIterable<V>(this.baseGraph.getEdges(key, value), this.graphChangedListeners, this.trigger, this, version);
+	}
+	
 
 	// Get/Set Version Methods
 	// --------------------------------------------------------------
@@ -179,7 +235,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	}
 
 	/**
-	 * An enum which indicates the start or the end edges of a range. 
+	 * An enum which indicates the start or the end edges of a range.
 	 */
 	enum StartOrEnd {
 		START,
@@ -188,9 +244,13 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 
 	/**
 	 * Set the start or end version of the element
-	 * @param startOrEnd Whether to set the start or the end of the version range.
-	 * @param versionedElement The graph {@link Element} to set the version for
-	 * @param version The version to set
+	 * 
+	 * @param startOrEnd
+	 *            Whether to set the start or the end of the version range.
+	 * @param versionedElement
+	 *            The graph {@link Element} to set the version for
+	 * @param version
+	 *            The version to set
 	 */
 	public void setVersion(StartOrEnd startOrEnd, Element versionedElement, V version) {
 		// TODO: A more appropriate way to handle element types
@@ -212,7 +272,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	@SuppressWarnings("unchecked")
 	public V getStartVersion(Element versionedElement)
 	{
-		return (V) versionedElement.getProperty(VALID_MIN_VERSION_PROP_KEY);
+		return (V) getNonEventElement(versionedElement).getProperty(VALID_MIN_VERSION_PROP_KEY);
 	}
 
 	/**
@@ -225,7 +285,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	@SuppressWarnings("unchecked")
 	public V getEndVersion(Element versionedElement)
 	{
-		return (V) versionedElement.getProperty(VALID_MAX_VERSION_PROP_KEY);
+		return (V) getNonEventElement(versionedElement).getProperty(VALID_MAX_VERSION_PROP_KEY);
 	}
 
 	/**
@@ -265,7 +325,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		return version.equals(getEndVersion(versionedElement));
 	}
 
-	// Graph Version Methods
+	// Graph Version Identifier Methods
 	// --------------------------------------------------------------
 	/**
 	 * Set the latest graph version.
@@ -352,7 +412,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		// throw new RuntimeException("Could not find the graph configuration vertex");
 	}
 
-	// Graph Versioning
+	// Methods used by events responses
 	// --------------------------------------------------------------
 	/**
 	 * Version vertices in the graph.
@@ -401,37 +461,29 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		}
 	}
 
-	/**
-	 * Returns whether the specified property key is used internally by the versioned graph or not.
-	 * 
-	 * @param key
-	 *            The property key to determine
-	 * @return true if property is for internal usage only
-	 */
-	private boolean isPropertyInternal(String key) {
-		return (LATEST_GRAPH_VERSION_PROP_KEY.equals(key) || (REMOVED_PROP_KEY.equals(key))
-				|| (VALID_MIN_VERSION_PROP_KEY.equals(key)) || (VALID_MAX_VERSION_PROP_KEY.equals(key)) || (HISTORIC_ELEMENT_PROP_KEY.equals(key)));
-	}
 
 	/**
 	 * Create a historical vertex which contains the modified vertex content before it was modified.
 	 * 
+	 * TODO return vertex should be immutable.
 	 * @param modifiedVertex
-	 *            The modified versioned vertex.
+	 *            The modified {@link VersionedVertex}.
 	 * @param oldValues
 	 *            The old properties values of the modified versioned vertex.
 	 * @return {@link Vertex} containing the old data before the vertex was modified.
 	 */
-	private Vertex createHistoricalVertex(Vertex modifiedVertex, Map<String, Object> oldValues) {
+	private Vertex createHistoricalVertex(VersionedVertex<V> modifiedVertex, Map<String, Object> oldValues) {
 		// TODO: Auto identifier?
 		Vertex hv = getBaseGraph().addVertex(modifiedVertex.getId() + "-" + getLatestGraphVersion());
 		hv.setProperty(HISTORIC_ELEMENT_PROP_KEY, true);
-		
-		//ElementHelper.copyProperties(modifiedVertex, hv);
-		for (final String key : modifiedVertex.getPropertyKeys()) {
-			if (isPropertyInternal(key)) continue;
-			hv.setProperty(key, modifiedVertex.getProperty(key));
-        }
+
+		// ElementHelper.copyProperties(modifiedVertex, hv);
+		//Iterate on the base prop keys as we'r currently working on an active vertex
+		for (final String key : modifiedVertex.getBaseElement().getPropertyKeys()) {
+			if (isPropertyInternal(key))
+				continue;
+			hv.setProperty(key, modifiedVertex.getBaseElement().getProperty(key));
+		}
 
 		for (Map.Entry<String, Object> prop : oldValues.entrySet())
 		{
@@ -462,9 +514,9 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 */
 	private void addHistoricalVertexInChain(V latestGraphVersion,
 			V newVersion,
-			Vertex modifiedVertex,
+			VersionedVertex<V> modifiedVertex,
 			Vertex newHistoricalVertex) {
-		Iterable<Edge> currEdges = modifiedVertex.getEdges(Direction.OUT, PREV_VERSION_CHAIN_EDGE_TYPE);
+		Iterable<Edge> currEdges = modifiedVertex.getBaseVertex().getEdges(Direction.OUT, PREV_VERSION_CHAIN_EDGE_TYPE);
 
 		Iterator<Edge> currEdgesIterator = currEdges.iterator();
 
@@ -475,9 +527,9 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 
 			// TODO: Edge id?
 			Edge e = getBaseGraph().addEdge(null,
-					newHistoricalVertex,
-					((EventVertex) currEdge.getVertex(Direction.IN)).getBaseVertex(),
-					PREV_VERSION_CHAIN_EDGE_TYPE);
+				newHistoricalVertex,
+				currEdge.getVertex(Direction.IN),
+				PREV_VERSION_CHAIN_EDGE_TYPE);
 
 			getBaseGraph().removeEdge((currEdge instanceof EventEdge) ? ((EventEdge) currEdge).getBaseEdge() : currEdge);
 		}
@@ -493,8 +545,9 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	}
 
 	/**
-	 * Version the specified modified vertices.
+	 * Version the specified modified vertex.
 	 * 
+	 * TODO return vertex should be immutable.
 	 * @param latestGraphVersion
 	 *            The latest graph version
 	 * @param newVersion
@@ -508,7 +561,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 */
 	protected Vertex versionModifiedVertex(V latestGraphVersion,
 			V newVersion,
-			Vertex vertex,
+			VersionedVertex<V> vertex,
 			Map<String, Object> oldValues) {
 
 		Vertex historicalV = createHistoricalVertex(vertex, oldValues);
@@ -519,7 +572,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 
 	/**
 	 * Get the relevant vertex revision from the history for the specified vertex and version.
-	 * 
+	 * TODO return vertex should be immutable.
 	 * @param vertex
 	 *            The vertex to find the appropriate version for
 	 * @param version
@@ -529,17 +582,22 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 *             In case no vertex revision was found for the specified vertex and version
 	 */
 	public Vertex getVertexForVersion(Vertex vertex, V version) {
+		//TODO: Find a better approach to force versioning for vertex versions.
+		if (vertex instanceof VersionedVertex)
+			((VersionedVertex)vertex).setVersion(version);
+		
 		Range<V> verRange = getVersionRange(vertex);
 
-		log.trace("Finding vertex[{}] in revision history for version [{}].", vertex, version);
-		log.trace("Is vertex [{}] with range [{}] contains version [{}]?", vertex, verRange, version);
+		log.debug("Finding vertex[{}] in revision history for version [{}].", vertex, version);
+		log.debug("Is vertex [{}] with range [{}] contains version [{}]?", vertex, verRange, version);
 
 		if (!verRange.contains(version)) {
-			log.trace("No, seeking for previous vertex version");
-			Iterable<Edge> prevVerEdges = vertex.getEdges(Direction.OUT, PREV_VERSION_CHAIN_EDGE_TYPE);
+			log.debug("No, seeking for previous vertex version");
+			//Iterate over the base (non filtered) edges to seek for the revision chain edge
+			Iterable<Edge> prevVerEdges = getNonEventElement(vertex).getEdges(Direction.OUT, PREV_VERSION_CHAIN_EDGE_TYPE);
 
 			if (!prevVerEdges.iterator().hasNext()) {
-				throw new NotFoundException(String.format("Cannot find vertex %s in revision history for version [%s].",
+				throw ExceptionFactory.notFoundException(String.format("Cannot find vertex %s in revision history for version [%s].",
 						vertex,
 						version));
 			}
@@ -548,17 +606,83 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 			return getVertexForVersion(edge.getVertex(Direction.IN), version);
 		}
 
-		log.trace("Found vertex[{}] in revision history for version [{}].", vertex, version);
+		log.debug("Found vertex[{}] in revision history for version [{}].", vertex, version);
 		return vertex;
 	}
+
+	/**
+	 * Returns the property value of {@link VersionedVertex} for the specified key. 
+	 * Please note that this method will return the value of the property for the specific version
+	 * set in the {@link VersionedVertex}.
+	 * 
+	 * A null will be returned if property doesn't exist for the specified {@link VersionedVertex} in its set version.
+	 *
+	 * @see VersionedVertex#getVersion()
+	 * @param vertex The {@link VersionedVertex} to get the property value of.
+	 * @param key The proeprty key
+	 * @return The value of the specified property key for the specified @{link {@link VersionedVertex} or null if not found.
+	 */
+	public Object getProperty(VersionedVertex<V> vertex, String key) {
+		try {
+			log.debug("Getting property [{}] for vertex [{}] for version [{}]", key, vertex, vertex.getVersion());
+			Vertex v = getVertexForVersion(vertex, vertex.getVersion());
+			//Return the value from the base element
+			return getNonEventElement(v).getProperty(key);
+		}catch(NotFoundException e) {
+			return null;
+		}
+	}
 	
-	// Utils
-	//--------------------------------------------------------------
+	public Set<String> getPropertyKeys(VersionedVertex<V> vertex) {
+		try {
+			Vertex v = getVertexForVersion(vertex, vertex.getVersion());
+			//Return the keys from the base element
+			return getNonEventElement(v).getPropertyKeys();
+		}catch(NotFoundException e) {
+			return null;
+		}
+	}
+
+	// Internal Utils
+	// --------------------------------------------------------------
+	/**
+	 * @param element
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
 	private <G extends Element> G getNonEventElement(G element) {
 		if (element instanceof EventElement) {
-			return (G) ((EventElement)element).getBaseElement();
+			return (G) ((EventElement) element).getBaseElement();
 		} else {
 			return element;
 		}
+	}
+	
+	/**
+	 * Raise an exception of the specified {@link Element} does not support events.
+	 * 
+	 * @param element
+	 *            The element to be checked
+	 */
+	private void raiseExceptionIfNotVersionedElement(Element element) {
+		if (!(element instanceof EventElement)) {
+			throw new IllegalArgumentException(String.format("Element [%s] does not support events.", element));
+		}
+	}
+	
+	/**
+	 * Returns whether the specified property key is used internally by the versioned graph or not.
+	 * 
+	 * @param key
+	 *            The property key to determine
+	 * @return true if property is for internal usage only
+	 */
+	private boolean isPropertyInternal(String key) {
+		return (LATEST_GRAPH_VERSION_PROP_KEY.equals(key) || (REMOVED_PROP_KEY.equals(key))
+				|| (VALID_MIN_VERSION_PROP_KEY.equals(key)) || (VALID_MAX_VERSION_PROP_KEY.equals(key)) || (HISTORIC_ELEMENT_PROP_KEY.equals(key)));
+	}
+	
+	public boolean isHistoricalOrInternal(Element e) {
+		return ( ( e.getProperty(HISTORIC_ELEMENT_PROP_KEY) != null) && ((Boolean)e.getProperty(HISTORIC_ELEMENT_PROP_KEY)) );
 	}
 }
