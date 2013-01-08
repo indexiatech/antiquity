@@ -52,6 +52,7 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 		versionAddedVertices(getNextGraphVersion(), Arrays.asList(vertex));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void vertexPropertyChanged(Vertex vertex, String key, Object oldValue, Object setValue) {
 		log.debug("==Vertex [{}] property[{}] was modified [{} -> {}]==",
@@ -63,9 +64,10 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put(key, oldValue);
 
-		versionModifiedVertex(getLatestGraphVersion(), getNextGraphVersion(), vertex, props);
+		versionModifiedVertex(getLatestGraphVersion(), getNextGraphVersion(), (VersionedVertex<V>)vertex, props);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void vertexPropertyRemoved(Vertex vertex, String key, Object removedValue) {
 		log.debug("==Vertex property [{}] was removed [{}->{}]==", vertex, removedValue);
@@ -73,7 +75,7 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put(key, removedValue);
 
-		versionModifiedVertex(getLatestGraphVersion(), getNextGraphVersion(), vertex, props);
+		versionModifiedVertex(getLatestGraphVersion(), getNextGraphVersion(), (VersionedVertex<V>)vertex, props);
 	}
 
 	@Override
