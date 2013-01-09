@@ -114,16 +114,27 @@ public class VersionedGraphTest extends GraphTest {
 	}
 
 	public void testVersionedVertexProperties() {
-		Vertex v = graph.addVertex("fooV");
+		VersionedVertex<Long> v = (VersionedVertex<Long>) graph.addVertex("fooV");
+		int propsSize = v.getPropertyKeys().size();
 		Long emptyVersion = graph.getLatestGraphVersion();
 		v.setProperty("prop", "foo");
+		// TODO: Consider automated latest version set to a VersionedVertex when setting properties.
+		v.setForVersion(graph.getLatestGraphVersion());
+		assertEquals(propsSize + 1, v.getPropertyKeys().size());
 		Long fooVersion = graph.getLatestGraphVersion();
 		v.setProperty("prop", "bar");
+		// TODO: Consider automated latest version set to a VersionedVertex when setting properties.
+		v.setForVersion(graph.getLatestGraphVersion());
+		assertEquals(propsSize + +1, v.getPropertyKeys().size());
 		Long barVersion = graph.getLatestGraphVersion();
 		v.setProperty("prop", "baz");
 		Long bazVersion = graph.getLatestGraphVersion();
 		v.setProperty("prop", "qux");
 		Long quxVersion = graph.getLatestGraphVersion();
+		v.setProperty("newProp", "fooNew");
+		// TODO: Consider automated latest version set to a VersionedVertex when setting properties.
+		v.setForVersion(graph.getLatestGraphVersion());
+		assertEquals(propsSize + +2, v.getPropertyKeys().size());
 
 		assertEquals("foo", graph.getVertexForVersion(v, fooVersion).getProperty("prop"));
 		assertEquals("bar", graph.getVertexForVersion(v, barVersion).getProperty("prop"));
@@ -132,15 +143,15 @@ public class VersionedGraphTest extends GraphTest {
 
 		ArrayList<Vertex> chain = new ArrayList<Vertex>();
 		getVertexChain(chain, v);
-		assertEquals(5, chain.size());
+		assertEquals(6, chain.size());
 
 		// Compare via getId() and not via EventElement.equals coz class types might be different
 		// (HistoricalVertex/VersionedVertex)
 		assertEquals(chain.get(0), v);
-		assertEquals(chain.get(1).getId(), graph.getVertexForVersion(v, bazVersion).getId());
-		assertEquals(chain.get(2).getId(), graph.getVertexForVersion(v, barVersion).getId());
-		assertEquals(chain.get(3).getId(), graph.getVertexForVersion(v, fooVersion).getId());
-		assertEquals(chain.get(4).getId(), graph.getVertexForVersion(v, emptyVersion).getId());
+		assertEquals(chain.get(2).getId(), graph.getVertexForVersion(v, bazVersion).getId());
+		assertEquals(chain.get(3).getId(), graph.getVertexForVersion(v, barVersion).getId());
+		assertEquals(chain.get(4).getId(), graph.getVertexForVersion(v, fooVersion).getId());
+		assertEquals(chain.get(5).getId(), graph.getVertexForVersion(v, emptyVersion).getId());
 	}
 
 	public void testVersionedVertexEdges() {
@@ -187,9 +198,11 @@ public class VersionedGraphTest extends GraphTest {
 
 	public void testEmptyVerticesPrivateHash() {
 		VersionedVertex<Long> v1 = (VersionedVertex) graph.addVertex("v1");
-		String hashOfEmptyVer1 = v1.calculatePrivateHash();
+		assertNotNull(v1.getProperty(VersionedGraph.PRIVATE_HASH_PROP_KEY));
+		String hashOfEmptyVer1 = ElementUtils.calculateElementPrivateHash(v1, graph.getInternalProperties());
 		VersionedVertex<Long> v2 = (VersionedVertex) graph.addVertex("v2");
-		String hashOfEmptyVer2 = v1.calculatePrivateHash();
+		assertNotNull(v2.getProperty(VersionedGraph.PRIVATE_HASH_PROP_KEY));
+		String hashOfEmptyVer2 = ElementUtils.calculateElementPrivateHash(v1, graph.getInternalProperties());
 		assertNotSame(hashOfEmptyVer1, hashOfEmptyVer2);
 		graph.getBaseGraph().removeVertex(v1.getBaseVertex());
 		VersionedVertex<Long> v1New = (VersionedVertex) graph.addVertex("v1");
@@ -201,14 +214,15 @@ public class VersionedGraphTest extends GraphTest {
 		v1.setProperty("keyFoo", "foo");
 		v1.setProperty("keyBar", "bar");
 		v1.setProperty("keyBaz", "baz");
-		String v1HashWith3Props = v1.calculatePrivateHash();
+		String v1HashWith3Props = ElementUtils.calculateElementPrivateHash(v1, graph.getInternalProperties());
+		System.out.println(v1HashWith3Props);
 		graph.getBaseGraph().removeVertex(v1.getBaseVertex());
 
 		VersionedVertex<Long> v2 = (VersionedVertex) graph.addVertex("v2");
 		v2.setProperty("keyFoo", "foo");
 		v2.setProperty("keyBar", "bar");
 		v2.setProperty("keyBaz", "baz");
-		String v2HashWith3Props = v2.calculatePrivateHash();
+		String v2HashWith3Props = ElementUtils.calculateElementPrivateHash(v2, graph.getInternalProperties());
 		graph.getBaseGraph().removeVertex(v2.getBaseVertex());
 		assertNotSame(v1HashWith3Props, v2HashWith3Props);
 
@@ -217,10 +231,10 @@ public class VersionedGraphTest extends GraphTest {
 		v1New.setProperty("keyBar", "bar");
 		v1New.setProperty("keyBaz", "baz");
 		v1New.setProperty("keyQux", "qux");
-		assertNotSame(v1HashWith3Props, v1New.calculatePrivateHash());
+		assertNotSame(v1HashWith3Props, ElementUtils.calculateElementPrivateHash(v1New, graph.getInternalProperties()));
 
 		v1New.getBaseVertex().removeProperty("keyQux");
-		assertEquals(v1HashWith3Props, v1New.calculatePrivateHash());
+		assertEquals(v1HashWith3Props, ElementUtils.calculateElementPrivateHash(v1New, graph.getInternalProperties()));
 	}
 
 	private String getGraphNodesString() {
