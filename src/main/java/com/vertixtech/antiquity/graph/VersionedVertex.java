@@ -21,9 +21,6 @@ package com.vertixtech.antiquity.graph;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
@@ -97,30 +94,5 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 	 */
 	public void setForVersion(V forVersion) {
 		this.forVersion = forVersion;
-	}
-
-	/**
-	 * Calculate the private hash of the vertex
-	 * 
-	 * <p>
-	 * Hash is calculated based on SHA1 algorithm
-	 * </p>
-	 * 
-	 * @return A string representation of the hash
-	 * @see Hasher#toString()
-	 */
-	public String calculatePrivateHash() {
-		HashFunction hf = Hashing.sha1();
-		Hasher h = hf.newHasher();
-
-		h.putString("[" + getId().toString() + "]");
-		for (String p : getBaseElement().getPropertyKeys()) {
-			if (graph.isInternalProperty(p))
-				continue;
-			h.putString(p + "->" + getBaseElement().getProperty(p));
-		}
-		;
-
-		return h.hash().toString();
 	}
 }
