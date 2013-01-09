@@ -20,11 +20,11 @@ package co.indexia.antiquity.graph;
 
 import com.tinkerpop.blueprints.Graph;
 
-
 /**
  * An incremental {@link Long} non-transactional versioned graph.
- *  
- * @param <T> The type of the underline graph
+ * 
+ * @param <T>
+ *            The type of the underline graph
  * 
  * @see NonTransactionalVersionedGraph
  * @see Long
@@ -49,7 +49,7 @@ public class LongVersionedGraph<T extends Graph> extends NonTransactionalVersion
 	protected Long getNextGraphVersionImpl() {
 		long latestVersion = getLatestGraphVersion();
 		long nextVersion = latestVersion + 1;
-		
+
 		return nextVersion;
 	}
 
@@ -57,7 +57,7 @@ public class LongVersionedGraph<T extends Graph> extends NonTransactionalVersion
 	protected Long getMaxPossibleGraphVersion() {
 		return Long.MAX_VALUE;
 	}
-	
+
 	@Override
 	protected void setLatestGraphVersion(Long newVersionToBeCommitted) {
 		getVersionConfVertex().setProperty(LATEST_GRAPH_VERSION_PROP_KEY, newVersionToBeCommitted);

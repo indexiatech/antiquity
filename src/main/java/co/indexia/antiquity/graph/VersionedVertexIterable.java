@@ -30,48 +30,56 @@ import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListene
  */
 public class VersionedVertexIterable<V extends Comparable<V>> implements CloseableIterable<Vertex> {
 
-    private final Iterable<Vertex> iterable;
-    private final List<GraphChangedListener> graphChangedListeners;
-    private final EventTrigger trigger;
-    private final VersionedGraph<?,V> graph;
-    private final V version;
+	private final Iterable<Vertex> iterable;
+	private final List<GraphChangedListener> graphChangedListeners;
+	private final EventTrigger trigger;
+	private final VersionedGraph<?, V> graph;
+	private final V version;
 
-    public VersionedVertexIterable(final Iterable<Vertex> iterable, final List<GraphChangedListener> graphChangedListeners,
-                               final EventTrigger trigger, final VersionedGraph<?, V> graph, V version) {
-        this.iterable = iterable;
-        this.graphChangedListeners = graphChangedListeners;
-        this.trigger = trigger;
-        this.graph = graph;
-        this.version = version;
-    }
+	public VersionedVertexIterable(final Iterable<Vertex> iterable,
+			final List<GraphChangedListener> graphChangedListeners,
+			final EventTrigger trigger,
+			final VersionedGraph<?, V> graph,
+			V version) {
+		this.iterable = iterable;
+		this.graphChangedListeners = graphChangedListeners;
+		this.trigger = trigger;
+		this.graph = graph;
+		this.version = version;
+	}
 
-    public void close() {
-        if (iterable instanceof CloseableIterable) {
-            ((CloseableIterable<Vertex>) iterable).close();
-        }
-    }
+	@Override
+	public void close() {
+		if (iterable instanceof CloseableIterable) {
+			((CloseableIterable<Vertex>) iterable).close();
+		}
+	}
 
-    public Iterator<Vertex> iterator() {
-        return new Iterator<Vertex>() {
-            private final Iterator<Vertex> itty = iterable.iterator();
+	@Override
+	public Iterator<Vertex> iterator() {
+		return new Iterator<Vertex>() {
+			private final Iterator<Vertex> itty = iterable.iterator();
 
-            public void remove() {
-                this.itty.remove();
-            }
+			@Override
+			public void remove() {
+				this.itty.remove();
+			}
 
-            public Vertex next() {
-            	Vertex v = this.itty.next();
-            	
-            	if (graph.isHistoricalOrInternal(v)) {
-            		return v;
-            	} else {
-            		return new VersionedVertex<V>(this.itty.next(), graphChangedListeners, trigger, graph, version);
-            	}
-            }
+			@Override
+			public Vertex next() {
+				Vertex v = this.itty.next();
 
-            public boolean hasNext() {
-                return this.itty.hasNext();
-            }
-        };
-    }
+				if (graph.isHistoricalOrInternal(v)) {
+					return v;
+				} else {
+					return new VersionedVertex<V>(this.itty.next(), graphChangedListeners, trigger, graph, version);
+				}
+			}
+
+			@Override
+			public boolean hasNext() {
+				return this.itty.hasNext();
+			}
+		};
+	}
 }
