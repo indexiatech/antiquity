@@ -25,6 +25,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
@@ -51,6 +53,8 @@ import co.indexia.antiquity.utils.ExceptionFactory;
  */
 public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> extends EventGraph<T> implements GraphChangedListener {
 	Logger log = LoggerFactory.getLogger(VersionedGraph.class);
+
+	private final static Set<String> internalProperties;
 
 	/**
 	 * The property key which stores the last graph version
@@ -86,10 +90,22 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 */
 	public static final String HISTORIC_ELEMENT_PROP_KEY = "__HISTORIC__";
 
+	public static final String PRIVATE_HASH_PROP_KEY = "__PRIVATE_HASH__";
+
 	/**
 	 * The next version of the graph to be committed.
 	 */
 	private V nextGraphVersion = null;
+
+	static {
+		internalProperties =
+				ImmutableSet.of(LATEST_GRAPH_VERSION_PROP_KEY,
+						REMOVED_PROP_KEY,
+						VALID_MIN_VERSION_PROP_KEY,
+						VALID_MAX_VERSION_PROP_KEY,
+						HISTORIC_ELEMENT_PROP_KEY,
+						PRIVATE_HASH_PROP_KEY);
+	}
 
 	/**
 	 * Create an instance of {@link VersionedGraph} with the specified underline {@link Graph}.
@@ -251,6 +267,29 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 */
 	public void setEndVersion(Element versionedElement, V endVersion) {
 		setVersion(StartOrEnd.END, versionedElement, endVersion);
+	}
+
+	public void setPrivateHash(Vertex vertex) {
+		String newHash = ElementUtils.calculateElementPrivateHash(vertex, getInternalProperties());
+
+		if (vertex instanceof VersionedVertex) {
+			VersionedVertex<V> versionedVertex = ((VersionedVertex<V>) vertex);
+
+			String oldHash =
+					(String) versionedVertex.getBaseVertex()
+							.getProperty(VersionedGraph.PRIVATE_HASH_PROP_KEY);
+
+			if (Strings.isNullOrEmpty(oldHash) && (!oldHash.equals(newHash))) {
+				((VersionedVertex<V>) vertex).getBaseVertex()
+						.setProperty(VersionedGraph.PRIVATE_HASH_PROP_KEY, newHash);
+			} else {
+				log.debug("Calculated hash of vertex[{}] is equal to the existing hash, nothing to set.");
+			}
+
+		} else {
+			vertex.setProperty(VersionedGraph.PRIVATE_HASH_PROP_KEY, newHash);
+		}
+
 	}
 
 	/**
@@ -447,6 +486,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		for (Vertex v : vertices) {
 			getNonEventElement(v).setProperty(HISTORIC_ELEMENT_PROP_KEY, false);
 			setVersion(v, range);
+			setPrivateHash(v);
 		}
 	}
 
@@ -560,7 +600,6 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 				PREV_VERSION_CHAIN_EDGE_TYPE);
 		setStartVersion(newHistoricalVertex, getStartVersion(modifiedVertex));
 		setEndVersion(newHistoricalVertex, latestGraphVersion);
-		setStartVersion(modifiedVertex, newVersion);
 	}
 
 	/**
@@ -586,6 +625,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 
 		Vertex historicalV = createHistoricalVertex(vertex, oldValues);
 		addHistoricalVertexInChain(latestGraphVersion, newVersion, vertex, historicalV);
+		setStartVersion(vertex, newVersion);
 
 		return historicalV;
 	}
@@ -605,7 +645,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	public Vertex getVertexForVersion(Vertex vertex, V version) {
 		// TODO: Find a better approach to force versioning for vertex versions.
 		if (vertex instanceof VersionedVertex)
-			((VersionedVertex) vertex).setForVersion(version);
+			((VersionedVertex<V>) vertex).setForVersion(version);
 
 		Range<V> verRange = getVersionRange(vertex);
 
@@ -705,8 +745,17 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 * @return true if property is for internal usage only
 	 */
 	public boolean isInternalProperty(String key) {
-		return (LATEST_GRAPH_VERSION_PROP_KEY.equals(key) || (REMOVED_PROP_KEY.equals(key))
-				|| (VALID_MIN_VERSION_PROP_KEY.equals(key)) || (VALID_MAX_VERSION_PROP_KEY.equals(key)) || (HISTORIC_ELEMENT_PROP_KEY.equals(key)));
+		return internalProperties.contains(key);
+	}
+
+	/**
+	 * Return the key names of internal properties used by the {@code}VersionedGraph to version the {@link Graph}
+	 * {@link Element}s.
+	 * 
+	 * @return An immutable set containing the internal property keys
+	 */
+	public Set<String> getInternalProperties() {
+		return VersionedGraph.internalProperties;
 	}
 
 	public boolean isHistoricalOrInternal(Element e) {
