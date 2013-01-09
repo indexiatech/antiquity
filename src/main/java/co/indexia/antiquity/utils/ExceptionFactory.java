@@ -22,6 +22,6 @@ import co.indexia.antiquity.graph.NotFoundException;
 
 public class ExceptionFactory {
 	public static NotFoundException notFoundException(String msg) {
-        return new NotFoundException(msg);
-    }
+		return new NotFoundException(msg);
+	}
 }

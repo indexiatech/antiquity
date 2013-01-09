@@ -47,31 +47,36 @@ class VersionedEdgeIterable<V extends Comparable<V>> implements CloseableIterabl
 		this.version = version;
 	}
 
+	@Override
 	public Iterator<Edge> iterator() {
 		return new Iterator<Edge>() {
 			private final Iterator<Edge> itty = Iterables.filter(iterable,
 					new VersionedVertexEdgePredicate<V>(graph, version)).iterator();
 
+			@Override
 			public void remove() {
 				this.itty.remove();
 			}
 
+			@Override
 			public Edge next() {
 				Edge edge = this.itty.next();
-				
+
 				if (graph.isHistoricalOrInternal(edge)) {
-            		return edge;
-            	} else {
-            		return new VersionedEdge<V>(edge, graphChangedListeners, trigger, graph, version);
-            	}
+					return edge;
+				} else {
+					return new VersionedEdge<V>(edge, graphChangedListeners, trigger, graph, version);
+				}
 			}
 
+			@Override
 			public boolean hasNext() {
 				return this.itty.hasNext();
 			}
 		};
 	}
 
+	@Override
 	public void close() {
 		if (this.iterable instanceof CloseableIterable) {
 			((CloseableIterable<Edge>) this.iterable).close();

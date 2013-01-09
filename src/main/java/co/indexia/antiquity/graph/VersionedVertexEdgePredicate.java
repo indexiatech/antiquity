@@ -27,19 +27,20 @@ import com.tinkerpop.blueprints.Edge;
 public class VersionedVertexEdgePredicate<V extends Comparable<V>> implements Predicate<Edge> {
 	Logger log = LoggerFactory.getLogger(VersionedVertexEdgePredicate.class);
 	private final V version;
-	private final VersionedGraph<?,V> graph;
+	private final VersionedGraph<?, V> graph;
 
-	public VersionedVertexEdgePredicate(VersionedGraph<?,V> graph, V version) {
+	public VersionedVertexEdgePredicate(VersionedGraph<?, V> graph, V version) {
 		this.version = version;
 		this.graph = graph;
 	}
 
 	@Override
 	public boolean apply(Edge edge) {
-		//Apply filtering only for versioned edges
-		//TODO: Create a better approach for finding versioned edges
-		if (!edge.getPropertyKeys().contains(VersionedGraph.VALID_MIN_VERSION_PROP_KEY)) return true;
-		
+		// Apply filtering only for versioned edges
+		// TODO: Create a better approach for finding versioned edges
+		if (!edge.getPropertyKeys().contains(VersionedGraph.VALID_MIN_VERSION_PROP_KEY))
+			return true;
+
 		boolean isEdgeInRange = graph.getVersionRange(edge).contains(version);
 		log.debug("Is edge[{}] is valid for version [{}] ? {}", edge, version, isEdgeInRange);
 

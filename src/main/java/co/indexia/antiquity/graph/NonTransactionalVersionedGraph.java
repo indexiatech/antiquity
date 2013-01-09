@@ -39,7 +39,7 @@ import com.tinkerpop.blueprints.Vertex;
  */
 public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends Comparable<V>> extends VersionedGraph<T, V> {
 	Logger log = LoggerFactory.getLogger(NonTransactionalVersionedGraph.class);
-	
+
 	public NonTransactionalVersionedGraph(T baseGraph) {
 		super(baseGraph);
 	}
@@ -64,7 +64,7 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put(key, oldValue);
 
-		versionModifiedVertex(getLatestGraphVersion(), getNextGraphVersion(), (VersionedVertex<V>)vertex, props);
+		versionModifiedVertex(getLatestGraphVersion(), getNextGraphVersion(), (VersionedVertex<V>) vertex, props);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -75,7 +75,7 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put(key, removedValue);
 
-		versionModifiedVertex(getLatestGraphVersion(), getNextGraphVersion(), (VersionedVertex<V>)vertex, props);
+		versionModifiedVertex(getLatestGraphVersion(), getNextGraphVersion(), (VersionedVertex<V>) vertex, props);
 	}
 
 	@Override
