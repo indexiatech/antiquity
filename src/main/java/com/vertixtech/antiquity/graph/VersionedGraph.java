@@ -183,6 +183,21 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 
 	// Enhanced methods for the standard blueprint graph API
 	// ------------------------------------------------------
+	/**
+	 * <p>
+	 * Get a vertex by id for the specified version.
+	 * </p>
+	 * 
+	 * <p>
+	 * A vertex revision must be available for the specified version, otherwise a null will be returned.
+	 * </p>
+	 * 
+	 * @param id
+	 *            The unique id of the vertex
+	 * @param version
+	 *            The version to get the vertex for
+	 * @return The found vertex, or null if not found
+	 */
 	public Vertex getVertex(final Object id, V version) {
 		final Vertex vertex = this.baseGraph.getVertex(id);
 		if (vertex == null) {
@@ -196,6 +211,13 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		}
 	}
 
+	/**
+	 * Get all vertices for the specified version.
+	 * 
+	 * @param version
+	 *            The version to get the vertices for
+	 * @return An {@link Iterable} of the found vertices for the specified version.
+	 */
 	public Iterable<Vertex> getVertices(V version) {
 		return new VersionedVertexIterable<V>(this.baseGraph.getVertices(),
 				this.graphChangedListeners,
@@ -204,6 +226,18 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 				version);
 	}
 
+	/**
+	 * Return an iterable to all the vertices in the graph that have a particular key/value property for the specified
+	 * version.
+	 * 
+	 * @param key
+	 *            The key of the property to filter vertices by
+	 * @param value
+	 *            The value of the property to filter vertices by
+	 * @param version
+	 *            The version to get the vertices for
+	 * @return An {@link Iterable} of the found vertices for the specified criteria.
+	 */
 	public Iterable<Vertex> getVertices(final String key, final Object value, V version) {
 		return new VersionedVertexIterable<V>(this.baseGraph.getVertices(key, value),
 				this.graphChangedListeners,
@@ -212,6 +246,13 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 				version);
 	}
 
+	/**
+	 * Return an iterable to all the edges in the graph for the specified version
+	 * 
+	 * @param version
+	 *            The version to get the edges for
+	 * @return An {@link Iterable} of the found edges for the specified version.
+	 */
 	public Iterable<Edge> getEdges(V version) {
 		return new VersionedEdgeIterable<V>(this.baseGraph.getEdges(),
 				this.graphChangedListeners,
@@ -220,6 +261,18 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 				version);
 	}
 
+	/**
+	 * Return an iterable to all the edges in the graph that have a particular key/value property for the specified
+	 * version.
+	 * 
+	 * @param key
+	 *            The key of the property to filter edges by
+	 * @param value
+	 *            The value of the property to filter edges by
+	 * @param version
+	 *            The version to get the edges for
+	 * @return An {@link Iterable} of the found edges for the specified criteria
+	 */
 	public Iterable<Edge> getEdges(final String key, final Object value, V version) {
 		return new VersionedEdgeIterable<V>(this.baseGraph.getEdges(key, value),
 				this.graphChangedListeners,
@@ -758,6 +811,13 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		return VersionedGraph.internalProperties;
 	}
 
+	/**
+	 * Identify whether the specified {@link Element} is an historical/internal
+	 * 
+	 * @param e
+	 *            The element to check
+	 * @return true if the specified element is historical/internal
+	 */
 	public boolean isHistoricalOrInternal(Element e) {
 		return ((e.getProperty(HISTORIC_ELEMENT_PROP_KEY) != null) && ((Boolean) e.getProperty(HISTORIC_ELEMENT_PROP_KEY)));
 	}

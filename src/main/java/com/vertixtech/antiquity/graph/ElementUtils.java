@@ -41,7 +41,7 @@ public class ElementUtils {
 	/**
 	 * Returns {@link Element}'s properties as an immutable map.
 	 * 
-	 * @return
+	 * @return An immutable map of the specified {@link Element} properties exlcuding the specified keys
 	 */
 	public static Map<String, Object> getPropertiesAsMap(Element element, Set<String> excludedKeys) {
 		Builder<String, Object> props = ImmutableMap.builder();
@@ -71,6 +71,10 @@ public class ElementUtils {
 	 * 
 	 * TODO Handle arrays values properly.
 	 * 
+	 * @param element
+	 *            The element to calculate the private hash for.
+	 * @param excludedKeys
+	 *            the keys to exclude when hash is calculated.
 	 * @return A string representation of the hash
 	 * @see Hasher#toString()
 	 */
