@@ -219,7 +219,7 @@ public class Range<T> {
 	/**
 	 * Return the minimum edge of this range.
 	 * 
-	 * @return the minimum edge of the range 
+	 * @return the minimum edge of the range
 	 */
 	public T min() {
 		return min;
@@ -420,15 +420,15 @@ public class Range<T> {
 		if (this.equals(otherRange)) {
 			return this;
 		}
-		
+
 		if (!this.isOverlappedBy(otherRange)) {
 			throw new IllegalArgumentException(String.format(
 					"The specified range %d does not overlap with this range %d", otherRange, this));
 		}
-		
+
 		T min = getComparator().compare(min(), otherRange.min()) < 0 ? otherRange.min() : min();
 		T max = getComparator().compare(max(), otherRange.max()) < 0 ? max() : otherRange.max();
-		
+
 		return range(min, max, getComparator());
 	}
 
