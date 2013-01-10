@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.Vertex;
+import co.indexia.antiquity.graph.identifierBehavior.GraphIdentifierBehavior;
 
 /**
  * A non transactional {@link VersionedGraph} implementation.
@@ -37,11 +38,11 @@ import com.tinkerpop.blueprints.Vertex;
  * @param <V>
  *            The type of the graph version
  */
-public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends Comparable<V>> extends VersionedGraph<T, V> {
+public class NonTransactionalVersionedGraph<T extends Graph, V extends Comparable<V>> extends VersionedGraph<T, V> {
 	Logger log = LoggerFactory.getLogger(NonTransactionalVersionedGraph.class);
 
-	public NonTransactionalVersionedGraph(T baseGraph) {
-		super(baseGraph);
+	public NonTransactionalVersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
+		super(baseGraph, identifierBehavior);
 	}
 
 	// Versioned Graph Events
@@ -49,7 +50,7 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 	@Override
 	public void vertexAdded(Vertex vertex) {
 		log.debug("==Vertex [{}] added==", vertex);
-		versionAddedVertices(getNextGraphVersion(), Arrays.asList(vertex));
+		versionAddedVertices(allocateNextGraphVersion(), Arrays.asList(vertex));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -64,7 +65,7 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put(key, oldValue);
 
-		versionModifiedVertex(getLatestGraphVersion(), getNextGraphVersion(), (VersionedVertex<V>) vertex, props);
+		versionModifiedVertex(getLatestGraphVersion(), allocateNextGraphVersion(), (VersionedVertex<V>) vertex, props);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -75,20 +76,20 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put(key, removedValue);
 
-		versionModifiedVertex(getLatestGraphVersion(), getNextGraphVersion(), (VersionedVertex<V>) vertex, props);
+		versionModifiedVertex(getLatestGraphVersion(), allocateNextGraphVersion(), (VersionedVertex<V>) vertex, props);
 	}
 
 	@Override
 	public void vertexRemoved(Vertex vertex) {
 		log.debug("==Vertex [{}] removed==", vertex);
 		V last = getLatestGraphVersion();
-		versionRemovedVertices(getNextGraphVersion(), last, Arrays.asList(vertex));
+		versionRemovedVertices(allocateNextGraphVersion(), last, Arrays.asList(vertex));
 	}
 
 	@Override
 	public void edgeAdded(Edge edge) {
 		log.debug("==Edge [{}] added==", edge);
-		versionAddedEdges(getNextGraphVersion(), Arrays.asList(edge));
+		versionAddedEdges(allocateNextGraphVersion(), Arrays.asList(edge));
 	}
 
 	@Override
@@ -105,6 +106,6 @@ public abstract class NonTransactionalVersionedGraph<T extends Graph, V extends 
 	public void edgeRemoved(Edge edge) {
 		log.debug("==Edge [{}] removed==", edge);
 		V last = getLatestGraphVersion();
-		versionRemovedEdges(getNextGraphVersion(), last, Arrays.asList(edge));
+		versionRemovedEdges(allocateNextGraphVersion(), last, Arrays.asList(edge));
 	}
 }
