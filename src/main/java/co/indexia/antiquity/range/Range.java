@@ -423,7 +423,7 @@ public class Range<T> {
 
 		if (!this.isOverlappedBy(otherRange)) {
 			throw new IllegalArgumentException(String.format(
-					"The specified range %d does not overlap with this range %d", otherRange, this));
+					"The specified range %s does not overlap with this range %s", otherRange.toString(), toString()));
 		}
 
 		T min = getComparator().compare(min(), otherRange.min()) < 0 ? otherRange.min() : min();
