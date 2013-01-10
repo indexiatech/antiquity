@@ -38,6 +38,7 @@ import com.tinkerpop.blueprints.util.wrappers.event.EventElement;
 import com.tinkerpop.blueprints.util.wrappers.event.EventGraph;
 import com.tinkerpop.blueprints.util.wrappers.event.EventVertex;
 import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListener;
+import com.vertixtech.antiquity.graph.identifierBehavior.GraphIdentifierBehavior;
 import com.vertixtech.antiquity.range.Range;
 import com.vertixtech.antiquity.utils.ExceptionFactory;
 
@@ -59,7 +60,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	/**
 	 * The property key which stores the last graph version
 	 */
-	protected static final String LATEST_GRAPH_VERSION_PROP_KEY = "__LATEST_GRAPH_VERSION__";
+	public static final String LATEST_GRAPH_VERSION_PROP_KEY = "__LATEST_GRAPH_VERSION__";
 	/**
 	 * A marker property key which indicates that the {@link Element} is removed.
 	 */
@@ -92,10 +93,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 
 	public static final String PRIVATE_HASH_PROP_KEY = "__PRIVATE_HASH__";
 
-	/**
-	 * The next version of the graph to be committed.
-	 */
-	private V nextGraphVersion = null;
+	private final GraphIdentifierBehavior<V> identifierBehavior;
 
 	static {
 		internalProperties =
@@ -113,9 +111,11 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 * @param baseGraph
 	 *            The underline base graph
 	 */
-	public VersionedGraph(T baseGraph) {
+	public VersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
 		super(baseGraph);
 		addListener(this);
+		this.identifierBehavior = identifierBehavior;
+		identifierBehavior.setGraph(this);
 
 		// TODO: A better approach to do that
 		// Create the conf vertex if it does not exist
@@ -438,60 +438,28 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 
 	// Graph Version Identifier Methods
 	// --------------------------------------------------------------
-	/**
-	 * Set the latest graph version.
-	 * 
-	 * @param newVersionToBeCommitted
-	 *            The new version to be committed to set.
-	 */
-	protected abstract void setLatestGraphVersion(V newVersionToBeCommitted);
-
-	/**
-	 * Get the current graph version.
-	 * 
-	 * <p>
-	 * Graph latest version is stored in the graph version configuration vertex
-	 * <p>
-	 * 
-	 * @see #getVersionConfVertex()
-	 * 
-	 * @return The current graph version.
-	 */
-	protected abstract V getLatestGraphVersionImpl();
-
 	protected V getLatestGraphVersion() {
-		return getLatestGraphVersionImpl();
-	}
-
-	/**
-	 * Get the next graph version
-	 * 
-	 * <p>
-	 * Note: This method must be thread safe, there should never be two concurrent calls that return the same version.
-	 * </p>
-	 * 
-	 * @return The next graph version
-	 */
-	protected abstract V getNextGraphVersionImpl();
-
-	protected V getNextGraphVersion() {
-		// TODO: Lock the configuration vertex
-		if ((nextGraphVersion == null) || (!(this instanceof TransactionalGraph))) {
-			nextGraphVersion = getNextGraphVersionImpl();
-		}
-
-		setLatestGraphVersion(nextGraphVersion);
-
-		// TODO: Unlock the configuration vertex
-		return nextGraphVersion;
+		return identifierBehavior.getLatestGraphVersion();
 	}
 
 	/**
 	 * Get the maximum possible graph version.
 	 * 
+	 * @see GraphIdentifierBehavior#getMaxPossibleGraphVersion()
 	 * @return The maximum possible graph version
 	 */
-	protected abstract V getMaxPossibleGraphVersion();
+	public V getMaxPossibleGraphVersion() {
+		return identifierBehavior.getMaxPossibleGraphVersion();
+	}
+
+	protected V allocateNextGraphVersion() {
+		// TODO: Lock the configuration vertex
+		V nextGraphVersion = identifierBehavior.getNextGraphVersion(getLatestGraphVersion());
+		getVersionConfVertex().setProperty(LATEST_GRAPH_VERSION_PROP_KEY, nextGraphVersion);
+
+		// TODO: Unlock the configuration vertex
+		return nextGraphVersion;
+	}
 
 	/**
 	 * Get the version configuration {@link Vertex}.
@@ -502,7 +470,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 * 
 	 * @return The configuration vertex of the versioned graph.
 	 */
-	protected Vertex getVersionConfVertex() {
+	public Vertex getVersionConfVertex() {
 		Vertex v = getBaseGraph().getVertex(GRAPH_CONF_VERTEX_ID);
 
 		if (v == null) {
@@ -534,7 +502,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 *            The vertices to be versioned.
 	 */
 	protected void versionAddedVertices(V version, Iterable<Vertex> vertices) {
-		Range<V> range = Range.range(version, getMaxPossibleGraphVersion());
+		Range<V> range = Range.range(version, identifierBehavior.getMaxPossibleGraphVersion());
 
 		for (Vertex v : vertices) {
 			getNonEventElement(v).setProperty(HISTORIC_ELEMENT_PROP_KEY, false);
@@ -552,7 +520,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 *            The edges to be versioned.
 	 */
 	protected void versionAddedEdges(V version, Iterable<Edge> edges) {
-		Range<V> range = Range.range(version, getMaxPossibleGraphVersion());
+		Range<V> range = Range.range(version, identifierBehavior.getMaxPossibleGraphVersion());
 
 		for (Edge e : edges) {
 			setVersion(e, range);

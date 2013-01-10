@@ -33,6 +33,7 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
 import com.tinkerpop.blueprints.util.wrappers.event.EventIndexableGraph;
+import com.vertixtech.antiquity.graph.identifierBehavior.LongGraphIdentifierBehavior;
 import com.vertixtech.antiquity.range.Range;
 
 public class VersionedGraphTest extends GraphTest {
@@ -51,7 +52,9 @@ public class VersionedGraphTest extends GraphTest {
 	@Override
 	public void setUp() throws Exception {
 		super.setUp();
-		graph = new LongVersionedGraph<TinkerGraph>(new TinkerGraph());
+		graph =
+				new NonTransactionalVersionedGraph<TinkerGraph, Long>(new TinkerGraph(),
+						new LongGraphIdentifierBehavior());
 
 	}
 
@@ -72,6 +75,7 @@ public class VersionedGraphTest extends GraphTest {
 	public void testAddingNewVersionedVertices() {
 		Long initialVer = graph.getLatestGraphVersion();
 		Vertex fooV = graph.addVertex("fooV");
+		System.out.println(graph.getLatestGraphVersion());
 		Long fooVVer1 = graph.getLatestGraphVersion();
 		assertEquals(Range.range(fooVVer1, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(fooV));
 		fooV.setProperty("prop", "foo");
