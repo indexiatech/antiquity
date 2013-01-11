@@ -32,8 +32,8 @@ public interface GraphIdentifierBehavior<V extends Comparable<V>> {
 	/**
 	 * Get the next graph version.
 	 * 
-	 * @param newVersionToBeCommitted
-	 *            The new version to be committed to set.
+	 * @param currentVersion
+	 *            The current version of the graph.
 	 */
 	public V getNextGraphVersion(V currentVersion);
 
