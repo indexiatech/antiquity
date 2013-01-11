@@ -93,7 +93,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 
 	public static final String PRIVATE_HASH_PROP_KEY = "__PRIVATE_HASH__";
 
-	private final GraphIdentifierBehavior<V> identifierBehavior;
+	protected final GraphIdentifierBehavior<V> identifierBehavior;
 
 	static {
 		internalProperties =
@@ -452,13 +452,33 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		return identifierBehavior.getMaxPossibleGraphVersion();
 	}
 
-	protected V allocateNextGraphVersion() {
-		// TODO: Lock the configuration vertex
+	/**
+	 * Get the next graph version.
+	 * 
+	 * @see #allocateNextGraphVersion(Comparable)
+	 * @param allocate
+	 *            Whether to allocate the next version or not.
+	 * @return The next version of the graph
+	 */
+	protected V getNextGraphVersion(boolean allocate) {
 		V nextGraphVersion = identifierBehavior.getNextGraphVersion(getLatestGraphVersion());
-		getVersionConfVertex().setProperty(LATEST_GRAPH_VERSION_PROP_KEY, nextGraphVersion);
+		if (allocate)
+			allocateNextGraphVersion(nextGraphVersion);
 
-		// TODO: Unlock the configuration vertex
+		// TODO: Unlock the configuration vertex if allocate=false, otherwise unlock should occur during transaction
+		// commit
 		return nextGraphVersion;
+	}
+
+	/**
+	 * Allocate (persist) the specified next version in the graph in the configuration vertex.
+	 * 
+	 * @param nextVersion
+	 *            The next version to allocate.
+	 */
+	protected void allocateNextGraphVersion(V nextVersion) {
+		// TODO: Unlock the configuration vertex
+		getVersionConfVertex().setProperty(LATEST_GRAPH_VERSION_PROP_KEY, nextVersion);
 	}
 
 	/**
