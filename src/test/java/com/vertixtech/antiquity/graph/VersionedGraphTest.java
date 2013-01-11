@@ -18,7 +18,6 @@
  */
 package com.vertixtech.antiquity.graph;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -27,64 +26,41 @@ import java.util.Set;
 import com.google.common.collect.Lists;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.TestSuite;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
-import com.tinkerpop.blueprints.util.wrappers.event.EventIndexableGraph;
-import com.vertixtech.antiquity.graph.identifierBehavior.LongGraphIdentifierBehavior;
 import com.vertixtech.antiquity.range.Range;
 
-public class VersionedGraphTest extends GraphTest {
-	private VersionedGraph<TinkerGraph, Long> graph;
-
-	@Override
-	public Graph generateGraph() {
-		return generateGraph("");
-	}
-
-	@Override
-	public Graph generateGraph(final String graphDirectoryName) {
-		return new EventIndexableGraph<TinkerGraph>(new TinkerGraph());
-	}
-
-	@Override
-	public void setUp() throws Exception {
-		super.setUp();
-		graph =
-				new NonTransactionalVersionedGraph<TinkerGraph, Long>(new TinkerGraph(),
-						new LongGraphIdentifierBehavior());
+public class VersionedGraphTest<V extends Comparable<V>> extends TestSuite {
+	public VersionedGraphTest() {
 
 	}
 
-	@Override
-	public void doTestSuite(final TestSuite testSuite) throws Exception {
-		for (Method method : testSuite.getClass().getDeclaredMethods()) {
-			if (method.getName().startsWith("test")) {
-				System.out.println("Testing " + method.getName() + "...");
-				method.invoke(testSuite);
-			}
-		}
+	public VersionedGraphTest(final GraphTest graphTest) {
+		super(graphTest);
 	}
 
 	public void testGraphConfVertexShouldExist() {
+		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		assertTrue(graph.getVersionConfVertex() != null);
 	}
 
 	public void testAddingNewVersionedVertices() {
-		Long initialVer = graph.getLatestGraphVersion();
+		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
+		V initialVer = graph.getLatestGraphVersion();
 		Vertex fooV = graph.addVertex("fooV");
 		System.out.println(graph.getLatestGraphVersion());
-		Long fooVVer1 = graph.getLatestGraphVersion();
+		V fooVVer1 = graph.getLatestGraphVersion();
 		assertEquals(Range.range(fooVVer1, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(fooV));
 		fooV.setProperty("prop", "foo");
-		System.out.println(getGraphNodesString());
-		Long fooVVer2 = graph.getLatestGraphVersion();
+		// TODO: Check why it fails
+		// System.out.println(getGraphNodesString());
+		V fooVVer2 = graph.getLatestGraphVersion();
 		Vertex barV = graph.addVertex("barV");
-		Long barVVer1 = graph.getLatestGraphVersion();
+		V barVVer1 = graph.getLatestGraphVersion();
 		barV.setProperty("prop", "bar");
-		Long barVVer2 = graph.getLatestGraphVersion();
+		V barVVer2 = graph.getLatestGraphVersion();
 
 		Vertex fooVLoaded = graph.getVertex(fooV.getId());
 		Vertex barVLoaded = graph.getVertex(barV.getId());
@@ -96,6 +72,7 @@ public class VersionedGraphTest extends GraphTest {
 	}
 
 	public void testAddingNewVersionedEdges() {
+		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		Vertex fooV = graph.addVertex("fooV");
 		Vertex barV = graph.addVertex("barV");
 		Edge e = graph.addEdge("fooBarE", fooV, barV, "LINKED");
@@ -104,12 +81,13 @@ public class VersionedGraphTest extends GraphTest {
 	}
 
 	public void testRemovingVersionedVertices() {
+		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		Vertex fooV = graph.addVertex("fooV");
-		Long fooVer = graph.getLatestGraphVersion();
+		V fooVer = graph.getLatestGraphVersion();
 		Vertex barV = graph.addVertex("barV");
-		Long barVer = graph.getLatestGraphVersion();
+		V barVer = graph.getLatestGraphVersion();
 		graph.removeVertex(fooV);
-		Long barPostFooRemovalVer = graph.getLatestGraphVersion();
+		V barPostFooRemovalVer = graph.getLatestGraphVersion();
 		assertEquals(Range.range(fooVer, barVer), graph.getVersionRange(graph.getVertex(fooV.getId())));
 		assertEquals(Range.range(barVer, graph.getMaxPossibleGraphVersion()),
 				graph.getVersionRange(graph.getVertex(barV.getId())));
@@ -118,23 +96,24 @@ public class VersionedGraphTest extends GraphTest {
 	}
 
 	public void testVersionedVertexProperties() {
-		VersionedVertex<Long> v = (VersionedVertex<Long>) graph.addVertex("fooV");
+		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
+		VersionedVertex<V> v = (VersionedVertex<V>) graph.addVertex("fooV");
 		int propsSize = v.getPropertyKeys().size();
-		Long emptyVersion = graph.getLatestGraphVersion();
+		V emptyVersion = graph.getLatestGraphVersion();
 		v.setProperty("prop", "foo");
 		// TODO: Consider automated latest version set to a VersionedVertex when setting properties.
 		v.setForVersion(graph.getLatestGraphVersion());
 		assertEquals(propsSize + 1, v.getPropertyKeys().size());
-		Long fooVersion = graph.getLatestGraphVersion();
+		V fooVersion = graph.getLatestGraphVersion();
 		v.setProperty("prop", "bar");
 		// TODO: Consider automated latest version set to a VersionedVertex when setting properties.
 		v.setForVersion(graph.getLatestGraphVersion());
 		assertEquals(propsSize + +1, v.getPropertyKeys().size());
-		Long barVersion = graph.getLatestGraphVersion();
+		V barVersion = graph.getLatestGraphVersion();
 		v.setProperty("prop", "baz");
-		Long bazVersion = graph.getLatestGraphVersion();
+		V bazVersion = graph.getLatestGraphVersion();
 		v.setProperty("prop", "qux");
-		Long quxVersion = graph.getLatestGraphVersion();
+		V quxVersion = graph.getLatestGraphVersion();
 		v.setProperty("newProp", "fooNew");
 		// TODO: Consider automated latest version set to a VersionedVertex when setting properties.
 		v.setForVersion(graph.getLatestGraphVersion());
@@ -159,20 +138,21 @@ public class VersionedGraphTest extends GraphTest {
 	}
 
 	public void testVersionedVertexEdges() {
+		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		Vertex vertex1 = graph.addVertex("vertex1");
 		Vertex vertex2 = graph.addVertex("vertex2");
-		Long verAfterVerticesCreation = graph.getLatestGraphVersion();
+		V verAfterVerticesCreation = graph.getLatestGraphVersion();
 		vertex1.setProperty("key1", "foo");
 		vertex2.setProperty("key2", "foo");
-		Long verBeforeEdges = graph.getLatestGraphVersion();
+		V verBeforeEdges = graph.getLatestGraphVersion();
 		Edge e1 = graph.addEdge("v1v2_1", vertex1, vertex2, "V1_TO_V2");
-		Long verAfterEdge1 = graph.getLatestGraphVersion();
+		V verAfterEdge1 = graph.getLatestGraphVersion();
 		Edge e2 = graph.addEdge("v1v2_2", vertex1, vertex2, "V1_TO_V2");
-		Long verAfterEdge2 = graph.getLatestGraphVersion();
+		V verAfterEdge2 = graph.getLatestGraphVersion();
 		graph.removeEdge(e1);
-		Long verAfterDelOfE1 = graph.getLatestGraphVersion();
+		V verAfterDelOfE1 = graph.getLatestGraphVersion();
 		graph.removeEdge(e2);
-		Long verAfterDelOfBothEdges = graph.getLatestGraphVersion();
+		V verAfterDelOfBothEdges = graph.getLatestGraphVersion();
 
 		Vertex vv1 = graph.getVertexForVersion(vertex1, verAfterVerticesCreation);
 		Vertex vv2 = graph.getVertexForVersion(vertex1, verBeforeEdges);
@@ -201,6 +181,7 @@ public class VersionedGraphTest extends GraphTest {
 	}
 
 	public void testEmptyVerticesPrivateHash() {
+		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		VersionedVertex<Long> v1 = (VersionedVertex) graph.addVertex("v1");
 		assertNotNull(v1.getProperty(VersionedGraph.PRIVATE_HASH_PROP_KEY));
 		String hashOfEmptyVer1 = ElementUtils.calculateElementPrivateHash(v1, graph.getInternalProperties());
@@ -214,6 +195,7 @@ public class VersionedGraphTest extends GraphTest {
 	}
 
 	public void testVerticesWithPropsPrivateHash() {
+		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		VersionedVertex<Long> v1 = (VersionedVertex) graph.addVertex("v1");
 		v1.setProperty("keyFoo", "foo");
 		v1.setProperty("keyBar", "bar");
@@ -242,6 +224,7 @@ public class VersionedGraphTest extends GraphTest {
 	}
 
 	private String getGraphNodesString() {
+		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		StringBuffer graphStr = new StringBuffer();
 		for (Vertex v : graph.getVertices()) {
 			if (v.getId().equals(graph.getVersionConfVertex().getId()))
@@ -275,5 +258,9 @@ public class VersionedGraphTest extends GraphTest {
 		}
 
 		return chain;
+	}
+
+	private VersionedGraph<TinkerGraph, V> getGraphInstance() {
+		return (VersionedGraph<TinkerGraph, V>) graphTest.generateGraph();
 	}
 }
