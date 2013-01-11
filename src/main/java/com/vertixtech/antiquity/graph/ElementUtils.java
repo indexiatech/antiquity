@@ -90,4 +90,24 @@ public class ElementUtils {
 
 		return h.hash().toString();
 	}
+
+	/**
+	 * Get the specified {@link Element} properties as a string.
+	 * 
+	 * @param withHeader
+	 *            if true the element's id will be printed in the first line.
+	 * @param e
+	 *            The element to get the properties string for
+	 * @return A formatted string containing the specified element's properties
+	 */
+	public static String getElementPropsAsString(Element e, boolean withHeader) {
+		StringBuffer elementPropsStr = new StringBuffer();
+
+		if (withHeader)
+			elementPropsStr.append(e);
+		for (String key : e.getPropertyKeys())
+			elementPropsStr.append("\t").append(key).append("->").append(e.getProperty(key));
+
+		return elementPropsStr.toString();
+	}
 }
