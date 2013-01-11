@@ -50,7 +50,7 @@ public class NonTransactionalVersionedGraph<T extends Graph, V extends Comparabl
 	@Override
 	public void vertexAdded(Vertex vertex) {
 		log.debug("==Vertex [{}] added==", vertex);
-		versionAddedVertices(allocateNextGraphVersion(), Arrays.asList(vertex));
+		versionAddedVertices(getNextGraphVersion(true), Arrays.asList(vertex));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -65,7 +65,7 @@ public class NonTransactionalVersionedGraph<T extends Graph, V extends Comparabl
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put(key, oldValue);
 
-		versionModifiedVertex(getLatestGraphVersion(), allocateNextGraphVersion(), (VersionedVertex<V>) vertex, props);
+		versionModifiedVertex(getLatestGraphVersion(), getNextGraphVersion(true), (VersionedVertex<V>) vertex, props);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -76,20 +76,20 @@ public class NonTransactionalVersionedGraph<T extends Graph, V extends Comparabl
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put(key, removedValue);
 
-		versionModifiedVertex(getLatestGraphVersion(), allocateNextGraphVersion(), (VersionedVertex<V>) vertex, props);
+		versionModifiedVertex(getLatestGraphVersion(), getNextGraphVersion(true), (VersionedVertex<V>) vertex, props);
 	}
 
 	@Override
 	public void vertexRemoved(Vertex vertex) {
 		log.debug("==Vertex [{}] removed==", vertex);
 		V last = getLatestGraphVersion();
-		versionRemovedVertices(allocateNextGraphVersion(), last, Arrays.asList(vertex));
+		versionRemovedVertices(getNextGraphVersion(true), last, Arrays.asList(vertex));
 	}
 
 	@Override
 	public void edgeAdded(Edge edge) {
 		log.debug("==Edge [{}] added==", edge);
-		versionAddedEdges(allocateNextGraphVersion(), Arrays.asList(edge));
+		versionAddedEdges(getNextGraphVersion(true), Arrays.asList(edge));
 	}
 
 	@Override
@@ -106,6 +106,6 @@ public class NonTransactionalVersionedGraph<T extends Graph, V extends Comparabl
 	public void edgeRemoved(Edge edge) {
 		log.debug("==Edge [{}] removed==", edge);
 		V last = getLatestGraphVersion();
-		versionRemovedEdges(allocateNextGraphVersion(), last, Arrays.asList(edge));
+		versionRemovedEdges(getNextGraphVersion(true), last, Arrays.asList(edge));
 	}
 }
