@@ -24,6 +24,7 @@ import java.util.Set;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
@@ -76,7 +77,7 @@ public class ElementUtils {
 	 * @param excludedKeys
 	 *            the keys to exclude when hash is calculated.
 	 * @return A string representation of the hash
-	 * @see Hasher#toString()
+	 * @see HashCode#toString()
 	 */
 	public static String calculateElementPrivateHash(Element element, Set<String> excludedKeys) {
 		Map<String, Object> props = ElementUtils.getPropertiesAsMap(element, excludedKeys);
