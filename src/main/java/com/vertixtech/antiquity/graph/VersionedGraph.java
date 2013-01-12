@@ -91,9 +91,20 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 */
 	public static final String HISTORIC_ELEMENT_PROP_KEY = "__HISTORIC__";
 
+	/**
+	 * The key name of the private hash calculation
+	 */
 	public static final String PRIVATE_HASH_PROP_KEY = "__PRIVATE_HASH__";
 
+	/**
+	 * The identifier behavior associated with this graph
+	 */
 	protected final GraphIdentifierBehavior<V> identifierBehavior;
+
+	/**
+	 * The graph configuration
+	 */
+	protected final Configuration conf;
 
 	static {
 		internalProperties =
@@ -105,17 +116,25 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 						PRIVATE_HASH_PROP_KEY);
 	}
 
+	public VersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
+		this(baseGraph, identifierBehavior, null);
+	}
+
 	/**
 	 * Create an instance of {@link VersionedGraph} with the specified underline {@link Graph}.
 	 * 
 	 * @param baseGraph
 	 *            The underline base graph
 	 */
-	public VersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
+	public VersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior, Configuration conf) {
 		super(baseGraph);
 		addListener(this);
 		this.identifierBehavior = identifierBehavior;
 		identifierBehavior.setGraph(this);
+		if (conf == null)
+			this.conf = new Configuration();
+		else
+			this.conf = conf;
 
 		// TODO: A better approach to do that
 		// Create the conf vertex if it does not exist
@@ -342,7 +361,13 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		} else {
 			vertex.setProperty(VersionedGraph.PRIVATE_HASH_PROP_KEY, newHash);
 		}
+	}
 
+	public String getPrivateHash(Vertex vertex) {
+		if (vertex instanceof VersionedVertex)
+			return (String) vertex.getProperty(VersionedGraph.PRIVATE_HASH_PROP_KEY);
+		else
+			throw new IllegalArgumentException("The specified vertex is not a versioned graph.");
 	}
 
 	/**
@@ -527,7 +552,9 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		for (Vertex v : vertices) {
 			getNonEventElement(v).setProperty(HISTORIC_ELEMENT_PROP_KEY, false);
 			setVersion(v, range);
-			setPrivateHash(v);
+			if (conf.getPrivateHashEnabled()) {
+				setPrivateHash(v);
+			}
 		}
 	}
 
@@ -667,6 +694,8 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		Vertex historicalV = createHistoricalVertex(vertex, oldValues);
 		addHistoricalVertexInChain(latestGraphVersion, newVersion, vertex, historicalV);
 		setStartVersion(vertex, newVersion);
+		if (conf.getPrivateHashEnabled())
+			setPrivateHash(vertex);
 
 		return historicalV;
 	}
