@@ -15,7 +15,7 @@ import com.tinkerpop.blueprints.impls.neo4j.Neo4jGraph;
 import co.indexia.antiquity.graph.identifierBehavior.LongGraphIdentifierBehavior;
 import co.indexia.antiquity.range.Range;
 
-public class TransactionalVersionedGraphTest extends GraphTest {
+public class TransactionalLongVersionedGraphTest extends GraphTest {
 	public TransactionalVersionedGraph<Neo4jGraph, Long> graph;
 
 	@Override
