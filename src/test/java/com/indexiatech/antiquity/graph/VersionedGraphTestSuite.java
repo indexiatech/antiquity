@@ -200,7 +200,7 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 		v1.setProperty("keyFoo", "foo");
 		v1.setProperty("keyBar", "bar");
 		v1.setProperty("keyBaz", "baz");
-		String v1HashWith3Props = ElementUtils.calculateElementPrivateHash(v1, graph.getInternalProperties());
+		String v1HashWith3Props = graph.getPrivateHash(v1);
 		System.out.println(v1HashWith3Props);
 		graph.getBaseGraph().removeVertex(v1.getBaseVertex());
 
@@ -208,7 +208,7 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 		v2.setProperty("keyFoo", "foo");
 		v2.setProperty("keyBar", "bar");
 		v2.setProperty("keyBaz", "baz");
-		String v2HashWith3Props = ElementUtils.calculateElementPrivateHash(v2, graph.getInternalProperties());
+		String v2HashWith3Props = graph.getPrivateHash(v2);
 		graph.getBaseGraph().removeVertex(v2.getBaseVertex());
 		assertNotSame(v1HashWith3Props, v2HashWith3Props);
 
@@ -217,10 +217,10 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 		v1New.setProperty("keyBar", "bar");
 		v1New.setProperty("keyBaz", "baz");
 		v1New.setProperty("keyQux", "qux");
-		assertNotSame(v1HashWith3Props, ElementUtils.calculateElementPrivateHash(v1New, graph.getInternalProperties()));
+		assertNotSame(v1HashWith3Props, graph.getPrivateHash(v1New));
 
 		v1New.getBaseVertex().removeProperty("keyQux");
-		assertEquals(v1HashWith3Props, ElementUtils.calculateElementPrivateHash(v1New, graph.getInternalProperties()));
+		assertEquals(v1HashWith3Props, graph.getPrivateHash(v1New));
 	}
 
 	private String getGraphNodesString() {
