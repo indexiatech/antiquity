@@ -32,12 +32,12 @@ import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
 import co.indexia.antiquity.range.Range;
 
-public class VersionedGraphTest<V extends Comparable<V>> extends TestSuite {
-	public VersionedGraphTest() {
+public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite {
+	public VersionedGraphTestSuite() {
 
 	}
 
-	public VersionedGraphTest(final GraphTest graphTest) {
+	public VersionedGraphTestSuite(final GraphTest graphTest) {
 		super(graphTest);
 	}
 

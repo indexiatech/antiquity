@@ -40,7 +40,7 @@ public class NonTransactionalLongTypeVersionedGraphTest extends GraphTest {
 
 	public void testVersionedGraphTestSuite() throws Exception {
 		this.stopWatch();
-		doTestSuite(new VersionedGraphTest<Long>(this));
+		doTestSuite(new VersionedGraphTestSuite<Long>(this));
 		printTestPerformance("GraphTestSuite", this.stopWatch());
 	}
 }
