@@ -32,8 +32,25 @@ import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListene
  * A {@link Vertex} implementation that supports versioning capabilities.
  */
 public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
+	/**
+	 * The graph that this instance is bound with.
+	 */
+
 	private final VersionedGraph<?, V> graph;
+	/**
+	 * Defines the version context of the vertex, properties and edges associated with this vertex will match the
+	 * specified version.
+	 */
 	private V forVersion;
+
+	/**
+	 * Whether this this is transient or not, Transient indicates that this instance was just created and was never
+	 * persisted before,
+	 * 
+	 * Several commands such as getting properties or associated edges will throw an exception when dealing with
+	 * transient vertices.
+	 */
+	private boolean trans;
 
 	protected VersionedVertex(Vertex rawVertex,
 			List<GraphChangedListener> graphChangedListeners,
@@ -47,6 +64,7 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 
 	@Override
 	public Iterable<Edge> getEdges(final Direction direction, final String... labels) {
+		operationNotSupportedForTransient(this);
 		return new VersionedEdgeIterable<V>(((Vertex) this.baseElement).getEdges(direction, labels),
 				this.graphChangedListeners,
 				trigger,
@@ -56,6 +74,7 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 
 	@Override
 	public Iterable<Vertex> getVertices(final Direction direction, final String... labels) {
+		operationNotSupportedForTransient(this);
 		return new VersionedVertexIterable<V>(((Vertex) this.baseElement).getVertices(direction, labels),
 				this.graphChangedListeners,
 				trigger,
@@ -65,11 +84,13 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 
 	@Override
 	public Object getProperty(String key) {
+		operationNotSupportedForTransient(this);
 		return graph.getProperty(this, key);
 	}
 
 	@Override
 	public Set<String> getPropertyKeys() {
+		operationNotSupportedForTransient(this);
 		return graph.getPropertyKeys(this);
 	}
 
@@ -94,5 +115,35 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 	 */
 	public void setForVersion(V forVersion) {
 		this.forVersion = forVersion;
+	}
+
+	/**
+	 * Whether this instance is transient or not.
+	 * 
+	 * @return true if this instance is transient.
+	 */
+	public boolean isTrans() {
+		return trans;
+	}
+
+	/**
+	 * Set the transient property.
+	 * 
+	 * @param trans
+	 *            The value to set
+	 */
+	public void setTrans(boolean trans) {
+		this.trans = trans;
+	}
+
+	/**
+	 * Throw an exception that the operation is unsupported in case this instance is transient.
+	 * 
+	 * @param v
+	 *            The vertex to test.
+	 */
+	private void operationNotSupportedForTransient(VersionedVertex<V> v) {
+		if (v.isTrans())
+			throw new IllegalStateException(String.format("The operation is not supported by transient vertex[%s]", v));
 	}
 }

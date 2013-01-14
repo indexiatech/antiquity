@@ -157,6 +157,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 					this.trigger,
 					this,
 					getLatestGraphVersion());
+			vv.setTrans(true);
 			this.onVertexAdded(vv);
 
 			return vv;
@@ -567,6 +568,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 			getNonEventElement(v).setProperty(HISTORIC_ELEMENT_PROP_KEY, false);
 			setVersion(v, range);
 			((VersionedVertex<V>) v).setForVersion(version);
+			((VersionedVertex<V>) v).setTrans(false);
 			if (conf.getPrivateHashEnabled()) {
 				setPrivateHash(v);
 			}
