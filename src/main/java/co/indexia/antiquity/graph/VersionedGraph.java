@@ -566,6 +566,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		for (Vertex v : vertices) {
 			getNonEventElement(v).setProperty(HISTORIC_ELEMENT_PROP_KEY, false);
 			setVersion(v, range);
+			((VersionedVertex<V>) v).setForVersion(version);
 			if (conf.getPrivateHashEnabled()) {
 				setPrivateHash(v);
 			}
@@ -708,6 +709,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		Vertex historicalV = createHistoricalVertex(vertex, oldValues);
 		addHistoricalVertexInChain(latestGraphVersion, newVersion, vertex, historicalV);
 		setStartVersion(vertex, newVersion);
+		vertex.setForVersion(newVersion);
 		if (conf.getPrivateHashEnabled())
 			setPrivateHash(vertex);
 
