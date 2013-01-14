@@ -353,7 +353,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 					(String) versionedVertex.getBaseVertex()
 							.getProperty(VersionedGraph.PRIVATE_HASH_PROP_KEY);
 
-			if (Strings.isNullOrEmpty(oldHash) && (!oldHash.equals(newHash))) {
+			if (Strings.isNullOrEmpty(oldHash) || (!oldHash.equals(newHash))) {
 				((VersionedVertex<V>) vertex).getBaseVertex()
 						.setProperty(VersionedGraph.PRIVATE_HASH_PROP_KEY, newHash);
 			} else {
