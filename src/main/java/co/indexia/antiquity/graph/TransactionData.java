@@ -90,8 +90,8 @@ public class TransactionData {
 		getRemovedVertices().clear();
 		getAddedEdges().clear();
 		getRemovedEdges().clear();
-		getModifiedPropsPerVertex();
-		getModifiedPropsPerEdge();
+		getModifiedPropsPerVertex().clear();
+		getModifiedPropsPerEdge().clear();
 	}
 
 	public String getDataAsString() {
