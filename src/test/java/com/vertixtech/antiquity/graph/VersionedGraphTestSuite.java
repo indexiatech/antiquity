@@ -26,7 +26,9 @@ import java.util.Set;
 import com.google.common.collect.Lists;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.TestSuite;
+import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
@@ -46,75 +48,129 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 		assertTrue(graph.getVersionConfVertex() != null);
 	}
 
+	public void testForVersionVertexProperty() {
+		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
+		Vertex fooV = graph.addVertex("fooV");
+		V forVer = ((VersionedVertex<V>) fooV).getForVersion();
+		assertNotNull(forVer);
+		commitIfTransactional(graph);
+		// Required by transactional graph as version is stamped only during commit
+		forVer = ((VersionedVertex<V>) fooV).getForVersion();
+		// in transactional graph, after commit value should be updated with new version
+		assertSame(forVer, ((VersionedVertex<V>) fooV).getForVersion());
+		// --
+		fooV.setProperty("key", "foo");
+		commitIfTransactional(graph);
+		V forVerAfterCommit = ((VersionedVertex<V>) fooV).getForVersion();
+		assertNotSame(forVer, forVerAfterCommit);
+	}
+
+	public void testUpdatedVertexInstanceShouldAlwaysContainTheLatestVersionAndData() {
+		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
+		VersionedVertex<V> fooV = (VersionedVertex<V>) graph.addVertex("fooV");
+		commitIfTransactional(graph);
+		assertNull(fooV.getProperty("key"));
+		int keysSize = fooV.getPropertyKeys().size();
+		assertEquals(graph.getLatestGraphVersion(), fooV.getForVersion());
+		assertEquals(keysSize, fooV.getPropertyKeys().size());
+		fooV.setProperty("key", "foo");
+		assertEquals("foo", fooV.getProperty("key"));
+		assertEquals(keysSize + 1, fooV.getPropertyKeys().size());
+		commitIfTransactional(graph);
+		assertEquals(graph.getLatestGraphVersion(), fooV.getForVersion());
+		assertEquals("foo", fooV.getProperty("key"));
+		assertEquals(keysSize + 1, fooV.getPropertyKeys().size());
+	}
+
 	public void testAddingNewVersionedVertices() {
 		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
-		V initialVer = graph.getLatestGraphVersion();
 		Vertex fooV = graph.addVertex("fooV");
-		System.out.println(graph.getLatestGraphVersion());
-		V fooVVer1 = graph.getLatestGraphVersion();
-		assertEquals(Range.range(fooVVer1, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(fooV));
-		fooV.setProperty("prop", "foo");
-		// TODO: Check why it fails
-		// System.out.println(getGraphNodesString());
-		V fooVVer2 = graph.getLatestGraphVersion();
-		Vertex barV = graph.addVertex("barV");
-		V barVVer1 = graph.getLatestGraphVersion();
-		barV.setProperty("prop", "bar");
-		V barVVer2 = graph.getLatestGraphVersion();
+		commitIfTransactional(graph);
+		V ver1 = graph.getLatestGraphVersion();
+		assertEquals(Range.range(ver1, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(fooV));
 
+		fooV.setProperty("prop", "foo");
+		commitIfTransactional(graph);
+		V ver2 = graph.getLatestGraphVersion();
+		assertEquals(Range.range(ver2, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(fooV));
+
+		// TODO: Check why getGraphNodesString() fails
+		// System.out.println(getGraphNodesString());
+		Vertex barV = graph.addVertex("barV");
+		commitIfTransactional(graph);
+		V ver3 = graph.getLatestGraphVersion();
+		barV.setProperty("prop", "bar");
+		commitIfTransactional(graph);
+		V ver4 = graph.getLatestGraphVersion();
 		Vertex fooVLoaded = graph.getVertex(fooV.getId());
 		Vertex barVLoaded = graph.getVertex(barV.getId());
 		assertEquals(fooV, fooVLoaded);
 		assertEquals(barV, barVLoaded);
 
-		assertEquals(Range.range(fooVVer2, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(fooVLoaded));
-		assertEquals(Range.range(barVVer2, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(barVLoaded));
+		assertEquals(Range.range(ver2, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(fooVLoaded));
+		assertEquals(Range.range(ver4, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(barVLoaded));
 	}
 
 	public void testAddingNewVersionedEdges() {
 		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		Vertex fooV = graph.addVertex("fooV");
+		commitIfTransactional(graph);
 		Vertex barV = graph.addVertex("barV");
+		commitIfTransactional(graph);
 		Edge e = graph.addEdge("fooBarE", fooV, barV, "LINKED");
+		commitIfTransactional(graph);
 
 		assertEquals(e, graph.getEdge(e.getId()));
+		assertNotNull(graph.getEdge(e.getId()));
 	}
 
 	public void testRemovingVersionedVertices() {
 		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		Vertex fooV = graph.addVertex("fooV");
+		commitIfTransactional(graph);
 		V fooVer = graph.getLatestGraphVersion();
 		Vertex barV = graph.addVertex("barV");
+		commitIfTransactional(graph);
 		V barVer = graph.getLatestGraphVersion();
 		graph.removeVertex(fooV);
+		commitIfTransactional(graph);
 		V barPostFooRemovalVer = graph.getLatestGraphVersion();
+
 		assertEquals(Range.range(fooVer, barVer), graph.getVersionRange(graph.getVertex(fooV.getId())));
 		assertEquals(Range.range(barVer, graph.getMaxPossibleGraphVersion()),
 				graph.getVersionRange(graph.getVertex(barV.getId())));
+
 		graph.removeVertex(barV);
+		commitIfTransactional(graph);
 		assertEquals(Range.range(barVer, barPostFooRemovalVer), graph.getVersionRange(graph.getVertex(barV.getId())));
 	}
 
 	public void testVersionedVertexProperties() {
 		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		VersionedVertex<V> v = (VersionedVertex<V>) graph.addVertex("fooV");
+		commitIfTransactional(graph);
 		int propsSize = v.getPropertyKeys().size();
 		V emptyVersion = graph.getLatestGraphVersion();
 		v.setProperty("prop", "foo");
+		commitIfTransactional(graph);
 		// TODO: Consider automated latest version set to a VersionedVertex when setting properties.
 		v.setForVersion(graph.getLatestGraphVersion());
 		assertEquals(propsSize + 1, v.getPropertyKeys().size());
 		V fooVersion = graph.getLatestGraphVersion();
 		v.setProperty("prop", "bar");
+		commitIfTransactional(graph);
 		// TODO: Consider automated latest version set to a VersionedVertex when setting properties.
 		v.setForVersion(graph.getLatestGraphVersion());
 		assertEquals(propsSize + +1, v.getPropertyKeys().size());
 		V barVersion = graph.getLatestGraphVersion();
 		v.setProperty("prop", "baz");
+		commitIfTransactional(graph);
 		V bazVersion = graph.getLatestGraphVersion();
 		v.setProperty("prop", "qux");
+		commitIfTransactional(graph);
 		V quxVersion = graph.getLatestGraphVersion();
 		v.setProperty("newProp", "fooNew");
+		commitIfTransactional(graph);
 		// TODO: Consider automated latest version set to a VersionedVertex when setting properties.
 		v.setForVersion(graph.getLatestGraphVersion());
 		assertEquals(propsSize + +2, v.getPropertyKeys().size());
@@ -140,18 +196,26 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 	public void testVersionedVertexEdges() {
 		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		Vertex vertex1 = graph.addVertex("vertex1");
+		commitIfTransactional(graph);
 		Vertex vertex2 = graph.addVertex("vertex2");
+		commitIfTransactional(graph);
 		V verAfterVerticesCreation = graph.getLatestGraphVersion();
 		vertex1.setProperty("key1", "foo");
+		commitIfTransactional(graph);
 		vertex2.setProperty("key2", "foo");
+		commitIfTransactional(graph);
 		V verBeforeEdges = graph.getLatestGraphVersion();
 		Edge e1 = graph.addEdge("v1v2_1", vertex1, vertex2, "V1_TO_V2");
+		commitIfTransactional(graph);
 		V verAfterEdge1 = graph.getLatestGraphVersion();
 		Edge e2 = graph.addEdge("v1v2_2", vertex1, vertex2, "V1_TO_V2");
+		commitIfTransactional(graph);
 		V verAfterEdge2 = graph.getLatestGraphVersion();
 		graph.removeEdge(e1);
+		commitIfTransactional(graph);
 		V verAfterDelOfE1 = graph.getLatestGraphVersion();
 		graph.removeEdge(e2);
+		commitIfTransactional(graph);
 		V verAfterDelOfBothEdges = graph.getLatestGraphVersion();
 
 		Vertex vv1 = graph.getVertexForVersion(vertex1, verAfterVerticesCreation);
@@ -181,46 +245,57 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 	}
 
 	public void testEmptyVerticesPrivateHash() {
-		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
+		VersionedGraph<?, V> graph = getGraphInstance();
 		VersionedVertex<Long> v1 = (VersionedVertex) graph.addVertex("v1");
-		assertNotNull(v1.getProperty(VersionedGraph.PRIVATE_HASH_PROP_KEY));
-		String hashOfEmptyVer1 = ElementUtils.calculateElementPrivateHash(v1, graph.getInternalProperties());
+		commitIfTransactional(graph);
+		assertNotNull(graph.getPrivateHash(v1));
+		String hashOfEmptyVer1 = graph.getPrivateHash(v1);
 		VersionedVertex<Long> v2 = (VersionedVertex) graph.addVertex("v2");
+		commitIfTransactional(graph);
 		assertNotNull(v2.getProperty(VersionedGraph.PRIVATE_HASH_PROP_KEY));
-		String hashOfEmptyVer2 = ElementUtils.calculateElementPrivateHash(v1, graph.getInternalProperties());
+		String hashOfEmptyVer2 = graph.getPrivateHash(v2);
+		// Two empty vertices should not have equal hash
 		assertNotSame(hashOfEmptyVer1, hashOfEmptyVer2);
-		graph.getBaseGraph().removeVertex(v1.getBaseVertex());
-		VersionedVertex<Long> v1New = (VersionedVertex) graph.addVertex("v1");
-		assertEquals(v1, v1New);
 	}
 
 	public void testVerticesWithPropsPrivateHash() {
 		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		VersionedVertex<Long> v1 = (VersionedVertex) graph.addVertex("v1");
+		commitIfTransactional(graph);
+		String v1EmptyHash = graph.getPrivateHash(v1);
 		v1.setProperty("keyFoo", "foo");
+		commitIfTransactional(graph);
+		String v1With1KeyHash = graph.getPrivateHash(v1);
 		v1.setProperty("keyBar", "bar");
+		commitIfTransactional(graph);
+		String v1With2KeysHash = graph.getPrivateHash(v1);
 		v1.setProperty("keyBaz", "baz");
-		String v1HashWith3Props = graph.getPrivateHash(v1);
-		System.out.println(v1HashWith3Props);
-		graph.getBaseGraph().removeVertex(v1.getBaseVertex());
+		commitIfTransactional(graph);
+		String v1With3KeysHash = graph.getPrivateHash(v1);
+		commitIfTransactional(graph);
+		assertNotSame(v1With1KeyHash, v1With2KeysHash);
+		assertNotSame(v1With1KeyHash, v1With3KeysHash);
+		assertNotSame(v1With2KeysHash, v1With3KeysHash);
 
 		VersionedVertex<Long> v2 = (VersionedVertex) graph.addVertex("v2");
+		commitIfTransactional(graph);
 		v2.setProperty("keyFoo", "foo");
+		commitIfTransactional(graph);
 		v2.setProperty("keyBar", "bar");
+		commitIfTransactional(graph);
 		v2.setProperty("keyBaz", "baz");
+		commitIfTransactional(graph);
 		String v2HashWith3Props = graph.getPrivateHash(v2);
-		graph.getBaseGraph().removeVertex(v2.getBaseVertex());
-		assertNotSame(v1HashWith3Props, v2HashWith3Props);
+		assertNotSame(v1With3KeysHash, v2HashWith3Props);
 
-		VersionedVertex<Long> v1New = (VersionedVertex) graph.addVertex("v1");
-		v1New.setProperty("keyFoo", "foo");
-		v1New.setProperty("keyBar", "bar");
-		v1New.setProperty("keyBaz", "baz");
-		v1New.setProperty("keyQux", "qux");
-		assertNotSame(v1HashWith3Props, graph.getPrivateHash(v1New));
+		String v1BeforeQux = graph.getPrivateHash(v1);
+		v1.setProperty("keyQux", "qux");
+		commitIfTransactional(graph);
+		assertNotSame(v1BeforeQux, graph.getPrivateHash(v1));
 
-		v1New.getBaseVertex().removeProperty("keyQux");
-		assertEquals(v1HashWith3Props, graph.getPrivateHash(v1New));
+		v1.removeProperty("keyQux");
+		commitIfTransactional(graph);
+		assertEquals(v1BeforeQux, graph.getPrivateHash(v1));
 	}
 
 	private String getGraphNodesString() {
@@ -262,5 +337,10 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 
 	private VersionedGraph<TinkerGraph, V> getGraphInstance() {
 		return (VersionedGraph<TinkerGraph, V>) graphTest.generateGraph();
+	}
+
+	public void commitIfTransactional(Graph graph) {
+		if (graph instanceof TransactionalGraph)
+			((TransactionalGraph) graph).commit();
 	}
 }
