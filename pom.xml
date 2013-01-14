@@ -26,6 +26,37 @@
 	<groupId>com.vertiextech</groupId>
 	<artifactId>antiquity</artifactId>
 	<version>0.1-SNAPSHOT</version>
+	
+	<name>Antiquity</name>
+	<description>Antiquity - A versioned graph implementation for known graph databases</description>
+	<url>https://github.com/asaf/antiquity</url>
+	
+	<issueManagement>
+		<url>https://github.com/kevinsawicki/github-maven-example/issues</url>
+		<system>GitHub Issues</system>
+	</issueManagement>
+	
+	<licenses>
+		<license>
+			<name>Affero GNU GPL v3.0</name>
+			<url>http://www.gnu.org/licenses/agpl-3.0.html</url>
+		</license>
+	</licenses>
+	
+	<scm>
+		<url>https://github.com/asaf/antiquity</url>
+		<connection>scm:git:git://github.com/asaf/antiquity.git</connection>
+		<developerConnection>scm:git:git@github.com:asaf/antiquity.git</developerConnection>
+	</scm>
+	
+	<developers>
+		<developer>
+			<email>asaf000@gmail.com</email>
+			<name>Asaf Shakarchi</name>
+			<url>http://asaf-shakarchi.blogspot.com</url>
+			<id>asaf</id>
+		</developer>
+	</developers>
 
 	<properties>
 		<jdk.version>1.6</jdk.version>
