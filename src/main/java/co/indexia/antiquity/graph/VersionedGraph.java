@@ -365,11 +365,23 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		}
 	}
 
+	/**
+	 * Get the private hash of the specified vertex, return null if no private hash is set.
+	 * 
+	 * @param vertex
+	 *            The vertex instance to get the private hash for
+	 * @return The private hash as a string
+	 * @throws IllegalArgumentException
+	 *             If the specified vertex is not a {@link VersionedVertex}.
+	 */
 	public String getPrivateHash(Vertex vertex) {
-		if (vertex instanceof VersionedVertex)
-			return (String) vertex.getProperty(VersionedGraph.PRIVATE_HASH_PROP_KEY);
-		else
+		if (vertex instanceof VersionedVertex) {
+			Object hash = vertex.getProperty(VersionedGraph.PRIVATE_HASH_PROP_KEY);
+			return hash != null ? (String) hash : null;
+		}
+		else {
 			throw new IllegalArgumentException("The specified vertex is not a versioned graph.");
+		}
 	}
 
 	/**
