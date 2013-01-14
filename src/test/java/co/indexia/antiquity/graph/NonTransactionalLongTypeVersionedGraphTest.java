@@ -33,7 +33,7 @@ public class NonTransactionalLongTypeVersionedGraphTest extends GraphTest {
 		for (Method method : testSuite.getClass().getDeclaredMethods()) {
 			if (method.getName().startsWith("test")) {
 				System.out.println("Testing " + method.getName() + "...");
-				testSuite.run();
+				method.invoke(testSuite);
 			}
 		}
 	}
