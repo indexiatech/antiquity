@@ -105,6 +105,17 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph, V extends
 				.getRemovedVertices());
 		versionAddedEdges(nextVersion, transactionData.get().getAddedEdges());
 		versionRemovedEdges(nextVersion, getLatestGraphVersion(), transactionData.get().getRemovedEdges());
+
+		for (Map.Entry<Vertex, Map<String, Object>> oldPropsPerVertex : transactionData.get()
+				.getModifiedPropsPerVertex()
+				.entrySet()) {
+
+			versionModifiedVertex(getLatestGraphVersion(),
+					nextVersion,
+					(VersionedVertex) oldPropsPerVertex.getKey(),
+					oldPropsPerVertex.getValue());
+		}
+		//
 	}
 
 	@Override
