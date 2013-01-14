@@ -98,4 +98,24 @@ public class TransactionalLongVersionedGraphTest extends GraphTest {
 		Assert.assertEquals("foo2", v2.getProperty("key2"));
 		Assert.assertEquals("foo3", v3.getProperty("key3"));
 	}
+
+	public void testQueringUncommittedChangesShouldCauseException() {
+		Vertex fooV = graph.addVertex("fooV");
+		try {
+			fooV.getPropertyKeys().size();
+			assertTrue(false);
+		} catch (IllegalStateException e) {
+			try {
+				fooV.setProperty("key", "foo");
+				fooV.getPropertyKeys().size();
+				assertTrue(false);
+			} catch (IllegalStateException ex) {
+
+			}
+		}
+
+		graph.commit();
+		assertTrue(fooV.getPropertyKeys().size() > 0);
+		assertEquals("foo", fooV.getProperty("key"));
+	}
 }
