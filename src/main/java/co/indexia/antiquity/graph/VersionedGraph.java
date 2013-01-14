@@ -152,12 +152,14 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		if (vertex == null) {
 			return null;
 		} else {
-			this.onVertexAdded(vertex);
-			return new VersionedVertex<V>(vertex,
+			VersionedVertex vv = new VersionedVertex<V>(vertex,
 					this.graphChangedListeners,
 					this.trigger,
 					this,
 					getLatestGraphVersion());
+			this.onVertexAdded(vv);
+
+			return vv;
 		}
 	}
 
