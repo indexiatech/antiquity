@@ -18,6 +18,13 @@
  */
 package com.vertixtech.antiquity.graph;
 
+import com.vertixtech.antiquity.utils.ExceptionFactory;
+
+/**
+ * An exception that is thrown if an element does not exist.
+ * 
+ * @see ExceptionFactory#notFoundException(String)
+ */
 public class NotFoundException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
 
