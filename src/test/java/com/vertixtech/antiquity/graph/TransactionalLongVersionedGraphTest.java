@@ -53,11 +53,11 @@ public class TransactionalLongVersionedGraphTest extends GraphTest {
 		graph.commit();
 	}
 
-	/*
-	 * TODO: Not working yet as VersionedGraphTestSuite requires to commit every change public void
-	 * testVersionedGraphTestSuite() throws Exception { this.stopWatch(); doTestSuite(new
-	 * VersionedGraphTestSuite<Long>(this)); printTestPerformance("GraphTestSuite", this.stopWatch()); }
-	 */
+	public void testVersionedGraphTestSuite() throws Exception {
+		this.stopWatch();
+		doTestSuite(new VersionedGraphTestSuite<Long>(this));
+		printTestPerformance("GraphTestSuite", this.stopWatch());
+	}
 
 	public void testFewAddAndRemovalOfVerticesInTheSameTransactionShouldHaveTheSameVersion() {
 		Vertex initial = graph.addVertex("vInit");
