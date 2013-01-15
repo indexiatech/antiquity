@@ -33,7 +33,13 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph, V extends
 	};
 
 	public TransactionalVersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
-		super(baseGraph, identifierBehavior);
+		super(baseGraph, identifierBehavior, null);
+	}
+
+	public TransactionalVersionedGraph(T baseGraph,
+			GraphIdentifierBehavior<V> identifierBehavior,
+			Configuration configuration) {
+		super(baseGraph, identifierBehavior, configuration);
 		this.trigger = new EventTrigger(this, true);
 	}
 
@@ -73,7 +79,7 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph, V extends
 
 	@Override
 	public void edgeAdded(Edge edge) {
-		log.debug("==Edge [{}] removed==", edge);
+		log.debug("==Edge [{}] added==", edge);
 		transactionData.get().getAddedEdges().add(edge);
 	}
 
@@ -110,12 +116,14 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph, V extends
 				.getModifiedPropsPerVertex()
 				.entrySet()) {
 
-			versionModifiedVertex(getLatestGraphVersion(),
-					nextVersion,
-					(VersionedVertex) oldPropsPerVertex.getKey(),
-					oldPropsPerVertex.getValue());
+			// if vertex is new then skip version the modification as it'll create an extra unneeded historical version
+			if (!transactionData.get().getAddedVertices().contains(oldPropsPerVertex.getKey())) {
+				versionModifiedVertex(getLatestGraphVersion(),
+						nextVersion,
+						(VersionedVertex) oldPropsPerVertex.getKey(),
+						oldPropsPerVertex.getValue());
+			}
 		}
-		//
 	}
 
 	@Override
@@ -193,13 +201,13 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph, V extends
 			Map<String, Object> map, Vertex vertex,
 			String key,
 			Object value) {
-		HashMap<String, Object> propsMap = null;
+
 		if (map == null) {
-			propsMap = new HashMap<String, Object>();
-			verticesMaps.put(vertex, propsMap);
+			map = new HashMap<String, Object>();
+			verticesMaps.put(vertex, map);
 		}
 
-		propsMap.put(key, value);
-		return propsMap;
+		map.put(key, value);
+		return map;
 	}
 }
