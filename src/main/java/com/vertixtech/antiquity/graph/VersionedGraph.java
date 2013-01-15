@@ -18,6 +18,7 @@
  */
 package com.vertixtech.antiquity.graph;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -857,5 +858,24 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	 */
 	public boolean isHistoricalOrInternal(Element e) {
 		return ((e.getProperty(HISTORIC_ELEMENT_PROP_KEY) != null) && ((Boolean) e.getProperty(HISTORIC_ELEMENT_PROP_KEY)));
+	}
+
+	/**
+	 * Get the vertex (history) chain of the specified vertex.
+	 * 
+	 * @param chain
+	 *            An empty list that will contain the history chain
+	 * @param v
+	 *            The vertex to get the chain for
+	 * @return
+	 */
+	public static void getVertexChain(ArrayList<Vertex> chain, Vertex v) {
+		chain.add(v);
+
+		Iterable<Edge> edges = v.getEdges(Direction.OUT, VersionedGraph.PREV_VERSION_CHAIN_EDGE_TYPE);
+		if (edges.iterator().hasNext()) {
+			Vertex next = edges.iterator().next().getVertex(Direction.IN);
+			getVertexChain(chain, next);
+		}
 	}
 }
