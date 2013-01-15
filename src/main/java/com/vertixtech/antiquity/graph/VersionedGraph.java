@@ -140,7 +140,9 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		// Create the conf vertex if it does not exist
 		if (getVersionConfVertex() == null) {
 			Vertex v = baseGraph.addVertex(GRAPH_CONF_VERTEX_ID);
-			v.setProperty("GRAPH_CONF_VERTEX_ID", "GRAPH_CONF_VERTEX_ID");
+			v.setProperty(GRAPH_CONF_VERTEX_ID, "GRAPH_CONF_VERTEX_ID");
+			if (baseGraph instanceof TransactionalGraph)
+				((TransactionalGraph) baseGraph).commit();
 		}
 	}
 
@@ -478,7 +480,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 
 	// Graph Version Identifier Methods
 	// --------------------------------------------------------------
-	protected V getLatestGraphVersion() {
+	public V getLatestGraphVersion() {
 		return identifierBehavior.getLatestGraphVersion();
 	}
 
@@ -534,7 +536,7 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		Vertex v = getBaseGraph().getVertex(GRAPH_CONF_VERTEX_ID);
 
 		if (v == null) {
-			Iterable<Vertex> vs = getBaseGraph().getVertices("GRAPH_CONF_VERTEX_ID", "GRAPH_CONF_VERTEX_ID");
+			Iterable<Vertex> vs = getBaseGraph().getVertices(GRAPH_CONF_VERTEX_ID, "GRAPH_CONF_VERTEX_ID");
 
 			if (vs.iterator().hasNext()) {
 				v = vs.iterator().next();
