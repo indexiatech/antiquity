@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.IndexableGraph;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.wrappers.event.EventTrigger;
@@ -40,7 +41,7 @@ import com.vertixtech.antiquity.graph.identifierBehavior.GraphIdentifierBehavior
  * @param <V>
  *            The version identifier type
  */
-public class TransactionalVersionedGraph<T extends TransactionalGraph, V extends Comparable<V>> extends VersionedGraph<T, V> implements TransactionalGraph {
+public class TransactionalVersionedGraph<T extends TransactionalGraph & IndexableGraph, V extends Comparable<V>> extends VersionedGraph<T, V> implements TransactionalGraph {
 	Logger log = LoggerFactory.getLogger(TransactionalVersionedGraph.class);
 
 	private final ThreadLocal<TransactionData> transactionData = new ThreadLocal<TransactionData>() {

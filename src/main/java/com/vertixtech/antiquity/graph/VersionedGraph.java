@@ -32,6 +32,8 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.Index;
+import com.tinkerpop.blueprints.IndexableGraph;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.wrappers.event.EventEdge;
@@ -53,7 +55,7 @@ import com.vertixtech.antiquity.utils.ExceptionFactory;
  * @see Graph
  * @see TransactionalGraph
  */
-public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> extends EventGraph<T> implements GraphChangedListener {
+public abstract class VersionedGraph<T extends IndexableGraph, V extends Comparable<V>> extends EventGraph<T> implements GraphChangedListener {
 	Logger log = LoggerFactory.getLogger(VersionedGraph.class);
 
 	private final static Set<String> internalProperties;
@@ -93,9 +95,19 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 	public static final String HISTORIC_ELEMENT_PROP_KEY = "__HISTORIC__";
 
 	/**
-	 * The key name of the private hash calculation
+	 * The key name of the private hash calculation.
 	 */
 	public static final String PRIVATE_HASH_PROP_KEY = "__PRIVATE_HASH__";
+
+	/**
+	 * The key name of the natural identifier of a vertex.
+	 */
+	public static final String VERTEX_ID_PROP_KEY = "_ID";
+
+	/**
+	 * The name of the index which contains the vertex identifiers.
+	 */
+	private static final String GRAPH_VERTEX_IDENTIFIERS_INDEX_NAME = "identifiers";
 
 	/**
 	 * The identifier behavior associated with this graph
@@ -554,6 +566,21 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		// throw new RuntimeException("Could not find the graph configuration vertex");
 	}
 
+	// Indices
+	// --------------------------------------------------------------
+	public Index<Vertex> getVertexIdentifiersIndex() {
+		return getOrCreateIndex(GRAPH_VERTEX_IDENTIFIERS_INDEX_NAME, Vertex.class);
+	}
+
+	private <E extends Element> Index<E> getOrCreateIndex(String indexName, Class<E> clazz) {
+		Index<E> idx = getBaseGraph().getIndex(indexName, clazz);
+
+		if (idx == null)
+			idx = getBaseGraph().createIndex(indexName, clazz);
+
+		return idx;
+	}
+
 	// Methods used by events responses
 	// --------------------------------------------------------------
 	/**
@@ -570,8 +597,26 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		for (Vertex v : vertices) {
 			getNonEventElement(v).setProperty(HISTORIC_ELEMENT_PROP_KEY, false);
 			setVersion(v, range);
-			((VersionedVertex<V>) v).setForVersion(version);
-			((VersionedVertex<V>) v).setTrans(false);
+			VersionedVertex<V> vv = ((VersionedVertex<V>) v);
+			vv.setForVersion(version);
+			vv.setTrans(false);
+			// for non transactional graphs, set the _ID
+			if (v.getProperty(VERTEX_ID_PROP_KEY) == null && (!(this instanceof TransactionalGraph))) {
+				vv.getBaseVertex().setProperty(VERTEX_ID_PROP_KEY, v.getId());
+			}
+
+			if (conf.getAutoIndexVertexIdProperty()) {
+				if (vv.getBaseVertex().getProperty(VERTEX_ID_PROP_KEY) != null) {
+					getVertexIdentifiersIndex().put(VERTEX_ID_PROP_KEY,
+							vv.getBaseVertex().getProperty(VERTEX_ID_PROP_KEY),
+							vv.getBaseVertex());
+				} else {
+					throw new IllegalStateException(String.format("Vertex [%s] does not contain property %s and auto _ID index is enabled"
+							,
+							v,
+							VERTEX_ID_PROP_KEY));
+				}
+			}
 			if (conf.getPrivateHashEnabled()) {
 				setPrivateHash(v);
 			}
@@ -598,6 +643,17 @@ public abstract class VersionedGraph<T extends Graph, V extends Comparable<V>> e
 		for (Vertex v : vertices) {
 			getNonEventElement(v).setProperty(REMOVED_PROP_KEY, nextVer);
 			getNonEventElement(v).setProperty(VALID_MAX_VERSION_PROP_KEY, maxVer);
+
+			if (conf.getAutoIndexVertexIdProperty() && v.getProperty(VERTEX_ID_PROP_KEY) != null) {
+				Iterable<Vertex> it =
+						getVertexIdentifiersIndex().get(VERTEX_ID_PROP_KEY, v.getProperty(VERTEX_ID_PROP_KEY));
+				if (it.iterator().hasNext()) {
+					Vertex vertexInIdx = it.iterator().next();
+					getVertexIdentifiersIndex().remove(VERTEX_ID_PROP_KEY,
+							v.getProperty(VERTEX_ID_PROP_KEY),
+							vertexInIdx);
+				}
+			}
 		}
 	}
 

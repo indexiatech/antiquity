@@ -29,12 +29,11 @@ import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.TestSuite;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.impls.neo4j.Neo4jGraph;
 import com.vertixtech.antiquity.graph.identifierBehavior.LongGraphIdentifierBehavior;
 import com.vertixtech.antiquity.range.Range;
 
-public class TransactionalLongVersionedGraphTest extends GraphTest {
+public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
 	public TransactionalVersionedGraph<Neo4jGraph, Long> graph;
 
 	@Override
@@ -46,6 +45,12 @@ public class TransactionalLongVersionedGraphTest extends GraphTest {
 	public Graph generateGraph(final String graphDirectoryName) {
 		Neo4jGraph baseGraph = new Neo4jGraph(new ImpermanentGraphDatabase());
 		return new TransactionalVersionedGraph<Neo4jGraph, Long>(baseGraph, new LongGraphIdentifierBehavior());
+	}
+
+	@Override
+	public Graph generateGraph(final String graphDirectoryName, Configuration conf) {
+		Neo4jGraph baseGraph = new Neo4jGraph(new ImpermanentGraphDatabase());
+		return new TransactionalVersionedGraph<Neo4jGraph, Long>(baseGraph, new LongGraphIdentifierBehavior(), conf);
 	}
 
 	@Override
