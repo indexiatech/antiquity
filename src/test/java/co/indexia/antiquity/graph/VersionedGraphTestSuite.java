@@ -181,7 +181,7 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 		assertEquals("qux", graph.getVertexForVersion(v, quxVersion).getProperty("prop"));
 
 		ArrayList<Vertex> chain = new ArrayList<Vertex>();
-		getVertexChain(chain, v);
+		VersionedGraph.getVertexChain(chain, v);
 		assertEquals(6, chain.size());
 
 		// Compare via getId() and not via EventElement.equals coz class types might be different
@@ -321,18 +321,6 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 		for (Edge e : edges) {
 			System.out.println(e);
 		}
-	}
-
-	private ArrayList<Vertex> getVertexChain(ArrayList<Vertex> chain, Vertex v) {
-		chain.add(v);
-
-		Iterable<Edge> edges = v.getEdges(Direction.OUT, VersionedGraph.PREV_VERSION_CHAIN_EDGE_TYPE);
-		if (edges.iterator().hasNext()) {
-			Vertex next = edges.iterator().next().getVertex(Direction.IN);
-			getVertexChain(chain, next);
-		}
-
-		return chain;
 	}
 
 	private VersionedGraph<TinkerGraph, V> getGraphInstance() {
