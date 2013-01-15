@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.IndexableGraph;
 import com.tinkerpop.blueprints.Vertex;
 import co.indexia.antiquity.graph.identifierBehavior.GraphIdentifierBehavior;
 
@@ -38,11 +38,15 @@ import co.indexia.antiquity.graph.identifierBehavior.GraphIdentifierBehavior;
  * @param <V>
  *            The type of the graph version
  */
-public class NonTransactionalVersionedGraph<T extends Graph, V extends Comparable<V>> extends VersionedGraph<T, V> {
+public class NonTransactionalVersionedGraph<T extends IndexableGraph, V extends Comparable<V>> extends VersionedGraph<T, V> {
 	Logger log = LoggerFactory.getLogger(NonTransactionalVersionedGraph.class);
 
 	public NonTransactionalVersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
 		super(baseGraph, identifierBehavior);
+	}
+
+	public NonTransactionalVersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior, Configuration conf) {
+		super(baseGraph, identifierBehavior, conf);
 	}
 
 	// Versioned Graph Events
