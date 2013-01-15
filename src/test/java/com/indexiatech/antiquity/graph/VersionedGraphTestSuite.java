@@ -193,6 +193,27 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 		assertEquals(chain.get(5).getId(), graph.getVertexForVersion(v, emptyVersion).getId());
 	}
 
+	public void testUnmodifiedPropertySets() {
+		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
+		VersionedVertex<V> v = (VersionedVertex<V>) graph.addVertex("fooV");
+		commitIfTransactional(graph);
+		v.setProperty("key", "foo");
+		commitIfTransactional(graph);
+		ArrayList<Vertex> vertexChain = new ArrayList<Vertex>();
+		VersionedGraph.getVertexChain(vertexChain, v);
+		assertEquals(2, vertexChain.size());
+		v.setPropertyIfChanged("key", "bar");
+		commitIfTransactional(graph);
+		vertexChain.clear();
+		VersionedGraph.getVertexChain(vertexChain, v);
+		assertEquals(3, vertexChain.size());
+		v.setPropertyIfChanged("key", "bar");
+		commitIfTransactional(graph);
+		vertexChain.clear();
+		VersionedGraph.getVertexChain(vertexChain, v);
+		assertEquals(3, vertexChain.size());
+	}
+
 	public void testVersionedVertexEdges() {
 		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		Vertex vertex1 = graph.addVertex("vertex1");
