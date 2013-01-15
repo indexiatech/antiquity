@@ -22,17 +22,31 @@ package co.indexia.antiquity.graph;
  * Configuraiton provides a list of properties which defines the behavior of the associated {@link VersionedGraph}.
  */
 public class Configuration {
+	/**
+	 * If true a private hash is calculated per vertex creation / modification
+	 */
 	public final Boolean privateHashEnabled;
 
-	public Configuration(Boolean privateHashEnabled) {
+	/**
+	 * If true an index is maintained for the id property of the vertex
+	 */
+	public final Boolean autoIndexVertexIdProperty;
+
+	public Configuration(Boolean privateHashEnabled, Boolean autoIndexVertexIdProperty) {
 		this.privateHashEnabled = privateHashEnabled;
+		this.autoIndexVertexIdProperty = autoIndexVertexIdProperty;
 	}
 
 	public Configuration() {
 		privateHashEnabled = true;
+		autoIndexVertexIdProperty = false;
 	}
 
 	public Boolean getPrivateHashEnabled() {
 		return privateHashEnabled;
+	}
+
+	public Boolean getAutoIndexVertexIdProperty() {
+		return autoIndexVertexIdProperty;
 	}
 }

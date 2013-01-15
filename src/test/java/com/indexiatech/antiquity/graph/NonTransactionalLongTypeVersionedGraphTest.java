@@ -22,11 +22,10 @@ import java.lang.reflect.Method;
 
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.TestSuite;
-import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
 import co.indexia.antiquity.graph.identifierBehavior.LongGraphIdentifierBehavior;
 
-public class NonTransactionalLongTypeVersionedGraphTest extends GraphTest {
+public class NonTransactionalLongTypeVersionedGraphTest extends VersionedGraphTest {
 	private VersionedGraph<TinkerGraph, Long> graph;
 
 	@Override
@@ -38,6 +37,12 @@ public class NonTransactionalLongTypeVersionedGraphTest extends GraphTest {
 	public Graph generateGraph(String graphDirectoryName) {
 		return new NonTransactionalVersionedGraph<TinkerGraph, Long>(new TinkerGraph(),
 				new LongGraphIdentifierBehavior());
+	}
+
+	@Override
+	public Graph generateGraph(String graphDirectoryName, Configuration conf) {
+		return new NonTransactionalVersionedGraph<TinkerGraph, Long>(new TinkerGraph(),
+				new LongGraphIdentifierBehavior(), conf);
 	}
 
 	@Override
