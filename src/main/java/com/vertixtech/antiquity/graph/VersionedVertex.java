@@ -82,6 +82,19 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 				forVersion);
 	}
 
+	/**
+	 * Set the specified value for the specified property key only if the new value is different from the current
+	 * property.
+	 * 
+	 * @param key
+	 * @param value
+	 */
+	public void setPropertyIfChanged(String key, Object value) {
+		if ((getPropertyKeys().contains(key)) && (!getProperty(key).equals(value))) {
+			setProperty(key, value);
+		}
+	}
+
 	@Override
 	public Object getProperty(String key) {
 		operationNotSupportedForTransient(this);
