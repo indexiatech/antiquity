@@ -32,14 +32,25 @@ public class Configuration {
 	 */
 	public final Boolean autoIndexVertexIdProperty;
 
-	public Configuration(Boolean privateHashEnabled, Boolean autoIndexVertexIdProperty) {
+	/**
+	 * If true an empty transaction won't be versioned.
+	 * 
+	 * This is only relevant to transactional graphs
+	 */
+	public final Boolean doNotVersionEmptyTransactions;
+
+	public Configuration(Boolean privateHashEnabled,
+			Boolean autoIndexVertexIdProperty,
+			Boolean doNotVersionEmptyTransactions) {
 		this.privateHashEnabled = privateHashEnabled;
 		this.autoIndexVertexIdProperty = autoIndexVertexIdProperty;
+		this.doNotVersionEmptyTransactions = doNotVersionEmptyTransactions;
 	}
 
 	public Configuration() {
 		privateHashEnabled = true;
 		autoIndexVertexIdProperty = false;
+		doNotVersionEmptyTransactions = true;
 	}
 
 	public Boolean getPrivateHashEnabled() {
@@ -48,5 +59,9 @@ public class Configuration {
 
 	public Boolean getAutoIndexVertexIdProperty() {
 		return autoIndexVertexIdProperty;
+	}
+
+	public Boolean getDoNotVersionEmptyTransactions() {
+		return doNotVersionEmptyTransactions;
 	}
 }
