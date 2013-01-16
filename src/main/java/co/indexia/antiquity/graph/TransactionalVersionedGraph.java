@@ -158,10 +158,26 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
 	@Override
 	public void commit() {
 		boolean transactionFailure = false;
-		V transactionVer = getNextGraphVersion(false);
+
+		V transactionVer = null;
 		try {
 			trigger.fireEventQueue();
-			log.debug("Comitting transaction[{}]", transactionVer);
+
+			// Empty transaction
+			if (conf.getDoNotVersionEmptyTransactions() && transactionData.get().isEmpty()) {
+				log.warn("An empty transaction was committed, skipping transaction commit");
+				this.baseGraph.commit();
+				return;
+			}
+
+			transactionVer = getNextGraphVersion(false);
+			if (transactionVer == null) {
+				transactionFailure = true;
+				log.error("Could not allocate next commit version, performing a rollback.");
+				this.baseGraph.rollback();
+			}
+
+			log.debug("Committing transaction[{}]", transactionVer);
 			handleTransactionData(transactionVer);
 			trigger.resetEventQueue();
 			transactionData.get().clear();
@@ -173,7 +189,8 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
 		} finally {
 			if (!transactionFailure) {
 				log.debug("Transaction[{}] successfully committed.", transactionVer);
-				allocateNextGraphVersion(transactionVer);
+				if (transactionVer != null)
+					allocateNextGraphVersion(transactionVer);
 			}
 			// TODO: Unlock the transaction version allocation
 		}
