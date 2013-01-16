@@ -124,4 +124,10 @@ public class TransactionData {
 
 		return str.toString();
 	}
+
+	public boolean isEmpty() {
+		return getAddedVertices().isEmpty() && getRemovedVertices().isEmpty() && getAddedEdges().isEmpty()
+				&& getRemovedEdges().isEmpty() && getModifiedPropsPerVertex().isEmpty()
+				&& getModifiedPropsPerEdge().isEmpty();
+	}
 }

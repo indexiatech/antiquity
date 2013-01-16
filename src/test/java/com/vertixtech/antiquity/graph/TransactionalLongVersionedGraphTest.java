@@ -158,4 +158,19 @@ public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
 		VersionedGraph.getVertexChain(vertexChain, fooV);
 		assertEquals(1, vertexChain.size());
 	}
+
+	/**
+	 * Empty transactions should not be versioned.
+	 * 
+	 * This is the expected default graph configuration behavior
+	 * 
+	 * @see Configuration#doNotVersionEmptyTransactions
+	 */
+	public void testEmptyTransactionShouldNotBeVersioned() {
+		Long ver1 = graph.getLatestGraphVersion();
+		graph.commit();
+		graph.commit();
+		graph.commit();
+		assertEquals(ver1, graph.getLatestGraphVersion());
+	}
 }

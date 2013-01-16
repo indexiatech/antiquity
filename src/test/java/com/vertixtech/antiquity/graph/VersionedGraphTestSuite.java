@@ -322,7 +322,7 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 	public void testVerticesIndex() {
 		VersionedGraph<TinkerGraph, V> graph =
 				(VersionedGraph<TinkerGraph, V>) ((VersionedGraphTest) graphTest).generateGraph("graph",
-						new Configuration(true, true));
+						new Configuration(true, true, true));
 		assertNotNull(graph.getVertexIdentifiersIndex());
 		List<Vertex> v =
 				Lists.newArrayList(graph.getVertexIdentifiersIndex().get(VersionedGraph.VERTEX_ID_PROP_KEY, "foo"));
