@@ -1,6 +1,8 @@
 Antiquity
 =========
 
+![diagram](http://dl.dropbox.com/u/21514850/antiquity/Antiquity-vertices-in-1-diagram.png)
+
 Antiquity - A versioned graph.
 
 Antiquity is a versioned graph with full history support for graph elements.
