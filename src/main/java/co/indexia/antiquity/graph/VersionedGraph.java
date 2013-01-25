@@ -617,7 +617,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 							VERTEX_ID_PROP_KEY));
 				}
 			}
-			if (conf.getPrivateHashEnabled()) {
+			if (conf.getPrivateVertexHashEnabled()) {
 				setPrivateHash(v);
 			}
 		}
@@ -771,7 +771,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 		addHistoricalVertexInChain(latestGraphVersion, newVersion, vertex, historicalV);
 		setStartVersion(vertex, newVersion);
 		vertex.setForVersion(newVersion);
-		if (conf.getPrivateHashEnabled())
+		if (conf.getPrivateVertexHashEnabled())
 			setPrivateHash(vertex);
 
 		return historicalV;
