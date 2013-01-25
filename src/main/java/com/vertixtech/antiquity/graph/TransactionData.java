@@ -18,6 +18,7 @@
  */
 package com.vertixtech.antiquity.graph;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -37,6 +38,11 @@ public class TransactionData {
 	private Map<Vertex, Map<String, Object>> modifiedPropsPerVertex;
 	private Map<Edge, Map<String, Object>> modifiedPropsPerEdge;
 
+	/**
+	 * Get the added vertices.
+	 * 
+	 * @return A set of added vertices.
+	 */
 	public Set<Vertex> getAddedVertices() {
 		if (addedVertices == null)
 			addedVertices = new HashSet<Vertex>();
@@ -44,10 +50,11 @@ public class TransactionData {
 		return addedVertices;
 	}
 
-	public void setAddedVertices(Set<Vertex> addedVertices) {
-		this.addedVertices = addedVertices;
-	}
-
+	/**
+	 * Get The removed vertices.
+	 * 
+	 * @return A set of removed vertices.
+	 */
 	public Set<Vertex> getRemovedVertices() {
 		if (removedVertices == null)
 			removedVertices = new HashSet<Vertex>();
@@ -55,10 +62,11 @@ public class TransactionData {
 		return removedVertices;
 	}
 
-	public void setRemovedVertices(Set<Vertex> removedVertices) {
-		this.removedVertices = removedVertices;
-	}
-
+	/**
+	 * Get the added edges.
+	 * 
+	 * @return A set of added edges
+	 */
 	public Set<Edge> getAddedEdges() {
 		if (addedEdges == null)
 			addedEdges = new HashSet<Edge>();
@@ -66,10 +74,11 @@ public class TransactionData {
 		return addedEdges;
 	}
 
-	public void setAddedEdges(Set<Edge> addedEdges) {
-		this.addedEdges = addedEdges;
-	}
-
+	/**
+	 * Get the removed edges
+	 * 
+	 * @return A set of removed edges
+	 */
 	public Set<Edge> getRemovedEdges() {
 		if (removedEdges == null)
 			removedEdges = new HashSet<Edge>();
@@ -77,10 +86,11 @@ public class TransactionData {
 		return removedEdges;
 	}
 
-	public void setRemovedEdges(Set<Edge> removedEdges) {
-		this.removedEdges = removedEdges;
-	}
-
+	/**
+	 * Get the modified properties per vertex.
+	 * 
+	 * @return A map contains the modified properties per vertex.
+	 */
 	public Map<Vertex, Map<String, Object>> getModifiedPropsPerVertex() {
 		if (modifiedPropsPerVertex == null)
 			modifiedPropsPerVertex = new HashMap<Vertex, Map<String, Object>>();
@@ -88,10 +98,11 @@ public class TransactionData {
 		return modifiedPropsPerVertex;
 	}
 
-	public void setModifiedPropsPerVertex(Map<Vertex, Map<String, Object>> modifiedPropsPerVertex) {
-		this.modifiedPropsPerVertex = modifiedPropsPerVertex;
-	}
-
+	/**
+	 * GEt the modified properties per edge
+	 * 
+	 * @return A map contains the modified properties per edge.
+	 */
 	public Map<Edge, Map<String, Object>> getModifiedPropsPerEdge() {
 		if (modifiedPropsPerEdge == null)
 			modifiedPropsPerEdge = new HashMap<Edge, Map<String, Object>>();
@@ -99,10 +110,14 @@ public class TransactionData {
 		return modifiedPropsPerEdge;
 	}
 
-	public void setModifiedPropsPerEdge(Map<Edge, Map<String, Object>> modifiedPropsPerEdge) {
-		this.modifiedPropsPerEdge = modifiedPropsPerEdge;
-	}
-
+	/**
+	 * <p>
+	 * Clear the data of this class.
+	 * </p>
+	 * <p>
+	 * This method mainly invokes {@link Collection#clear()} on all collections.
+	 * </p>
+	 */
 	public void clear() {
 		getAddedVertices().clear();
 		getRemovedVertices().clear();
@@ -112,6 +127,11 @@ public class TransactionData {
 		getModifiedPropsPerEdge().clear();
 	}
 
+	/**
+	 * Get the data that this instance contains as a string.
+	 * 
+	 * @return A string contains all data of this instance
+	 */
 	public String getDataAsString() {
 		StringBuffer str = new StringBuffer("Vertices to add:\n");
 
@@ -125,6 +145,11 @@ public class TransactionData {
 		return str.toString();
 	}
 
+	/**
+	 * Check whether this instance is empty of any data.
+	 * 
+	 * @return true if this instance has no data.
+	 */
 	public boolean isEmpty() {
 		return getAddedVertices().isEmpty() && getRemovedVertices().isEmpty() && getAddedEdges().isEmpty()
 				&& getRemovedEdges().isEmpty() && getModifiedPropsPerVertex().isEmpty()
