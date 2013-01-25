@@ -24,11 +24,26 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Predicate;
 import com.tinkerpop.blueprints.Edge;
 
+/**
+ * An implementation of {@link Predicate} for filtering edges that are not contained within a specified version range.
+ * 
+ * @see VersionedEdgeIterable
+ * @param <V>
+ *            The graph identifier type
+ */
 public class VersionedVertexEdgePredicate<V extends Comparable<V>> implements Predicate<Edge> {
 	Logger log = LoggerFactory.getLogger(VersionedVertexEdgePredicate.class);
 	private final V version;
 	private final VersionedGraph<?, V> graph;
 
+	/**
+	 * Create an instance of this class.
+	 * 
+	 * @param graph
+	 *            The {@link VersionedGraph} instance associated with this predicate
+	 * @param version
+	 *            The version of the predicate
+	 */
 	public VersionedVertexEdgePredicate(VersionedGraph<?, V> graph, V version) {
 		this.version = version;
 		this.graph = graph;

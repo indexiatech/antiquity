@@ -129,6 +129,14 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 						PRIVATE_HASH_PROP_KEY);
 	}
 
+	/**
+	 * Create an instance of this class.
+	 * 
+	 * @param baseGraph
+	 *            The base grap to wrap with versioning support.
+	 * @param identifierBehavior
+	 *            The graph identifier behavior implementation.
+	 */
 	public VersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
 		this(baseGraph, identifierBehavior, null);
 	}
@@ -138,6 +146,10 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 * 
 	 * @param baseGraph
 	 *            The underline base graph
+	 * @param identifierBehavior
+	 *            The graph identifier behavior implementation
+	 * @param conf
+	 *            The configuration instance of this instance.
 	 */
 	public VersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior, Configuration conf) {
 		super(baseGraph);
@@ -923,7 +935,6 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 *            An empty list that will contain the history chain
 	 * @param v
 	 *            The vertex to get the chain for
-	 * @return
 	 */
 	public static void getVertexChain(ArrayList<Vertex> chain, Vertex v) {
 		chain.add(v);
