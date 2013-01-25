@@ -27,6 +27,7 @@ import com.tinkerpop.blueprints.util.wrappers.event.EventTrigger;
 import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListener;
 
 /**
+ * 
  */
 public class VersionedVertexIterable<V extends Comparable<V>> implements CloseableIterable<Vertex> {
 
@@ -36,6 +37,15 @@ public class VersionedVertexIterable<V extends Comparable<V>> implements Closeab
 	private final VersionedGraph<?, V> graph;
 	private final V version;
 
+	/**
+	 * Create an instance of this class.
+	 * 
+	 * @param iterable
+	 * @param graphChangedListeners
+	 * @param trigger
+	 * @param graph
+	 * @param version
+	 */
 	public VersionedVertexIterable(final Iterable<Vertex> iterable,
 			final List<GraphChangedListener> graphChangedListeners,
 			final EventTrigger trigger,
