@@ -21,6 +21,7 @@ package com.vertixtech.antiquity.graph;
 import java.util.Iterator;
 import java.util.List;
 
+import com.google.common.collect.Iterables;
 import com.tinkerpop.blueprints.CloseableIterable;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.wrappers.event.EventTrigger;
@@ -68,7 +69,8 @@ public class VersionedVertexIterable<V extends Comparable<V>> implements Closeab
 	@Override
 	public Iterator<Vertex> iterator() {
 		return new Iterator<Vertex>() {
-			private final Iterator<Vertex> itty = iterable.iterator();
+			private final Iterator<Vertex> itty = Iterables.filter(iterable,
+					new VersionedVertexPredicate<V>(graph, version)).iterator();
 
 			@Override
 			public void remove() {
