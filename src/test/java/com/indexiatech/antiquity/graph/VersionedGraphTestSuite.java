@@ -18,6 +18,9 @@
  */
 package co.indexia.antiquity.graph;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -46,6 +49,28 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 	public void testGraphConfVertexShouldExist() {
 		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		assertTrue(graph.getVersionConfVertex() != null);
+	}
+
+	/**
+	 * This test verifies that marked deleted vertices are not available when {@link VersionedGraph#getVertices()} is
+	 * invoked. This test also ensure that the the associated edges of the removed vertex are marked as deleted too and
+	 * are not retrieved when {@link VersionedGraph#getEdges()} is invoked.
+	 */
+	public void testThatDeletedVertexIsFlaggedAsRemovedWithItsEdges() {
+		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
+		int vNum = Lists.newArrayList(graph.getVertices()).size();
+		int eNum = Lists.newArrayList(graph.getEdges()).size();
+		Vertex fooV = graph.addVertex("fooV");
+		Vertex barV = graph.addVertex("barV");
+		graph.addEdge(null, fooV, barV, "LINKED");
+		commitIfTransactional(graph);
+		assertThat(Lists.newArrayList(graph.getVertices()).size(), is(vNum + 2));
+		assertThat(Lists.newArrayList(graph.getEdges()).size(), is(eNum + 1));
+
+		graph.removeVertex(fooV);
+		commitIfTransactional(graph);
+		assertThat(Lists.newArrayList(graph.getVertices()).size(), is(vNum + 1));
+		assertThat(Lists.newArrayList(graph.getEdges()).size(), is(eNum));
 	}
 
 	/**

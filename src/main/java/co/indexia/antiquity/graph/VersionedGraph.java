@@ -657,6 +657,12 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	protected void versionRemovedVertices(V nextVer, V maxVer, Iterable<Vertex> vertices) {
 		for (Vertex v : vertices) {
+			VersionedVertex<V> vv = (VersionedVertex<V>) v;
+			vv.setForVersion(maxVer);
+
+			// Remove vertex edges
+			versionRemovedEdges(nextVer, maxVer, v.getEdges(Direction.BOTH));
+
 			getNonEventElement(v).setProperty(REMOVED_PROP_KEY, nextVer);
 			getNonEventElement(v).setProperty(VALID_MAX_VERSION_PROP_KEY, maxVer);
 
