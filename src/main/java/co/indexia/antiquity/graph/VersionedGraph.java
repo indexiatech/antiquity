@@ -58,12 +58,10 @@ import co.indexia.antiquity.utils.ExceptionFactory;
 public abstract class VersionedGraph<T extends IndexableGraph, V extends Comparable<V>> extends EventGraph<T> implements GraphChangedListener {
 	Logger log = LoggerFactory.getLogger(VersionedGraph.class);
 
-	private final static Set<String> internalProperties;
+	private final static Set<String> versionedVertexInternalProperties;
 
-	/**
-	 * The property key which stores the last graph version
-	 */
-	public static final String LATEST_GRAPH_VERSION_PROP_KEY = "__LATEST_GRAPH_VERSION__";
+	// Versioned Vertex internal properties
+	// --------------------------------------------------------------
 	/**
 	 * A marker property key which indicates that the {@link Element} is removed.
 	 */
@@ -76,16 +74,6 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 * A property key which holds the maximum valid version of this element.
 	 */
 	public static final String VALID_MAX_VERSION_PROP_KEY = "__VALID_MAX_VERSION__";
-
-	/**
-	 * The identifier of the graph configuration vertex
-	 */
-	public static final String GRAPH_CONF_VERTEX_ID = "VERSIONED_GRAPH_CONF_VERTEX";
-
-	/**
-	 * The label name of the edge which creates the chain of a vertex revisions
-	 */
-	public static final String PREV_VERSION_CHAIN_EDGE_TYPE = "PREV_VERSION";
 
 	/**
 	 * An element property key which indicates whether the element is for historical purposes or not.
@@ -102,32 +90,48 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	/**
 	 * The key name of the natural identifier of a vertex.
 	 */
-	public static final String VERTEX_ID_PROP_KEY = "_ID";
+	public static final String VERTEX_ID_PROP_KEY = "__ID__";
+
+	// General Internal Properties
+	// --------------------------------------------------------------
+	/**
+	 * The identifier of the graph configuration vertex
+	 */
+	public static final String GRAPH_CONF_VERTEX_ID = "VERSIONED_GRAPH_CONF_VERTEX";
 
 	/**
 	 * The name of the index which contains the vertex identifiers.
 	 */
-	private static final String GRAPH_VERTEX_IDENTIFIERS_INDEX_NAME = "identifiers";
+	private static final String GRAPH_VERTEX_IDENTIFIERS_INDEX_NAME = "IDENTIFIER_IDX";
+
+	/**
+	 * The property key which stores the last graph version
+	 */
+	public static final String LATEST_GRAPH_VERSION_PROP_KEY = "__LATEST_GRAPH_VERSION__";
+
+	/**
+	 * The label name of the edge which creates the chain of a vertex revisions
+	 */
+	public static final String PREV_VERSION_CHAIN_EDGE_TYPE = "__PREV_VERSION__";
 
 	/**
 	 * The identifier behavior associated with this graph
 	 */
 	protected final GraphIdentifierBehavior<V> identifierBehavior;
 
-	/**
-	 * The graph configuration
-	 */
-	protected final Configuration conf;
-
 	static {
-		internalProperties =
-				ImmutableSet.of(LATEST_GRAPH_VERSION_PROP_KEY,
-						REMOVED_PROP_KEY,
+		versionedVertexInternalProperties =
+				ImmutableSet.of(REMOVED_PROP_KEY,
 						VALID_MIN_VERSION_PROP_KEY,
 						VALID_MAX_VERSION_PROP_KEY,
 						HISTORIC_ELEMENT_PROP_KEY,
 						PRIVATE_HASH_PROP_KEY);
 	}
+
+	/**
+	 * The graph configuration
+	 */
+	protected final Configuration conf;
 
 	/**
 	 * Create an instance of this class.
@@ -695,7 +699,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 		// ElementHelper.copyProperties(modifiedVertex, hv);
 		// Iterate on the base prop keys as we'r currently working on an active vertex
 		for (final String key : modifiedVertex.getBaseElement().getPropertyKeys()) {
-			if (isInternalProperty(key))
+			if (isVersionedVertexInternalProperty(key))
 				continue;
 			hv.setProperty(key, modifiedVertex.getBaseElement().getProperty(key));
 		}
@@ -897,14 +901,14 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	}
 
 	/**
-	 * Returns whether the specified property key is used internally by the versioned graph or not.
+	 * Returns whether the specified property key is used internally for versioned vertices or not.
 	 * 
 	 * @param key
 	 *            The property key to determine
 	 * @return true if property is for internal usage only
 	 */
-	public boolean isInternalProperty(String key) {
-		return internalProperties.contains(key);
+	public boolean isVersionedVertexInternalProperty(String key) {
+		return versionedVertexInternalProperties.contains(key);
 	}
 
 	/**
@@ -913,8 +917,8 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 * 
 	 * @return An immutable set containing the internal property keys
 	 */
-	public Set<String> getInternalProperties() {
-		return VersionedGraph.internalProperties;
+	public static Set<String> getInternalProperties() {
+		return VersionedGraph.versionedVertexInternalProperties;
 	}
 
 	/**
