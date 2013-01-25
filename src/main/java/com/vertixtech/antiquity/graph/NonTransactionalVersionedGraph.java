@@ -41,10 +41,28 @@ import com.vertixtech.antiquity.graph.identifierBehavior.GraphIdentifierBehavior
 public class NonTransactionalVersionedGraph<T extends IndexableGraph, V extends Comparable<V>> extends VersionedGraph<T, V> {
 	Logger log = LoggerFactory.getLogger(NonTransactionalVersionedGraph.class);
 
+	/**
+	 * Create an instance of this class.
+	 * 
+	 * @param baseGraph
+	 *            The base class to wrap with versioning support
+	 * @param identifierBehavior
+	 *            The graph identifier behavior implementation.
+	 */
 	public NonTransactionalVersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
 		super(baseGraph, identifierBehavior);
 	}
 
+	/**
+	 * Create an instance of this class.
+	 * 
+	 * @param baseGraph
+	 *            The base class to wrap with versioning support
+	 * @param identifierBehavior
+	 *            The graph identifier behavior implementation.
+	 * @param conf
+	 *            The configuration instance of this instance.
+	 */
 	public NonTransactionalVersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior, Configuration conf) {
 		super(baseGraph, identifierBehavior, conf);
 	}

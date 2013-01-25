@@ -20,7 +20,17 @@ package com.vertixtech.antiquity.utils;
 
 import com.vertixtech.antiquity.graph.NotFoundException;
 
+/**
+ * A centralized location to instantiate application exceptions.
+ */
 public class ExceptionFactory {
+	/**
+	 * An exception that should be thrown when a property could not be found.
+	 * 
+	 * @param msg
+	 *            The message of the exception
+	 * @return An exception instance
+	 */
 	public static NotFoundException notFoundException(String msg) {
 		return new NotFoundException(msg);
 	}

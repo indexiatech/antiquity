@@ -28,6 +28,12 @@ import com.vertixtech.antiquity.utils.ExceptionFactory;
 public class NotFoundException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * Create an instance of this class.
+	 * 
+	 * @param message
+	 *            The message of the exception.
+	 */
 	public NotFoundException(String message) {
 		super(message);
 	}
