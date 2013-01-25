@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Predicate;
 import com.tinkerpop.blueprints.Edge;
+import com.vertixtech.antiquity.range.Range;
 
 /**
  * An implementation of {@link Predicate} for filtering edges that are not contained within a specified version range.
@@ -56,8 +57,13 @@ public class VersionedVertexEdgePredicate<V extends Comparable<V>> implements Pr
 		if (!edge.getPropertyKeys().contains(VersionedGraph.VALID_MIN_VERSION_PROP_KEY))
 			return true;
 
-		boolean isEdgeInRange = graph.getVersionRange(edge).contains(version);
-		log.debug("Is edge[{}] is valid for version [{}] ? {}", edge, version, isEdgeInRange);
+		Range<V> edgeRange = graph.getVersionRange(edge);
+		boolean isEdgeInRange = edgeRange.contains(version);
+		log.trace("Is edge[{}] with version [{}] is valid for version [{}] ? {}",
+				edge,
+				edgeRange,
+				version,
+				isEdgeInRange);
 
 		return isEdgeInRange;
 	}
