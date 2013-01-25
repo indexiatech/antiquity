@@ -189,8 +189,12 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
 		} finally {
 			if (!transactionFailure) {
 				log.debug("Transaction[{}] successfully committed.", transactionVer);
-				if (transactionVer != null)
+				// If version is not null (for some reason), then allocate the next version and commit it in the base
+				// graph.
+				if (transactionVer != null) {
 					allocateNextGraphVersion(transactionVer);
+					this.baseGraph.commit();
+				}
 			}
 			// TODO: Unlock the transaction version allocation
 		}
