@@ -25,7 +25,7 @@ public class Configuration {
 	/**
 	 * If true a private hash is calculated per vertex creation / modification
 	 */
-	public final Boolean privateHashEnabled;
+	public final Boolean privateVertexHashEnabled;
 
 	/**
 	 * If true an index is maintained for the id property of the vertex
@@ -39,28 +39,55 @@ public class Configuration {
 	 */
 	public final Boolean doNotVersionEmptyTransactions;
 
-	public Configuration(Boolean privateHashEnabled,
+	/**
+	 * Create an instance of this class with the specified configuration properties.
+	 * 
+	 * @param privateVertexHashEnabled
+	 * @param autoIndexVertexIdProperty
+	 * @param doNotVersionEmptyTransactions
+	 */
+	public Configuration(Boolean privateVertexHashEnabled,
 			Boolean autoIndexVertexIdProperty,
 			Boolean doNotVersionEmptyTransactions) {
-		this.privateHashEnabled = privateHashEnabled;
+		this.privateVertexHashEnabled = privateVertexHashEnabled;
 		this.autoIndexVertexIdProperty = autoIndexVertexIdProperty;
 		this.doNotVersionEmptyTransactions = doNotVersionEmptyTransactions;
 	}
 
+	/**
+	 * Create an instance of this class with default configuration.
+	 */
 	public Configuration() {
-		privateHashEnabled = true;
+		privateVertexHashEnabled = true;
 		autoIndexVertexIdProperty = false;
 		doNotVersionEmptyTransactions = true;
 	}
 
-	public Boolean getPrivateHashEnabled() {
-		return privateHashEnabled;
+	/**
+	 * Private vertex hash calculation.
+	 * 
+	 * The hash is calculated only for the vertex properties without taking its edges into account.
+	 * 
+	 * @return true if private hash should be calculated for vertices
+	 */
+	public Boolean getPrivateVertexHashEnabled() {
+		return privateVertexHashEnabled;
 	}
 
+	/**
+	 * Auto index for vertex identifier property key.
+	 * 
+	 * @return True if auto index for vertices property key should be enabled
+	 */
 	public Boolean getAutoIndexVertexIdProperty() {
 		return autoIndexVertexIdProperty;
 	}
 
+	/**
+	 * Skip versioning of empty transactions.
+	 * 
+	 * @return true if empty transactions should not be versioned.
+	 */
 	public Boolean getDoNotVersionEmptyTransactions() {
 		return doNotVersionEmptyTransactions;
 	}
