@@ -48,6 +48,28 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 		assertTrue(graph.getVersionConfVertex() != null);
 	}
 
+	/**
+	 * The test ensures that added vertices and edges are retrieved via {@link VersionedGraph#getVertices()} and
+	 * {@link VersionedGraph#getEdges()}
+	 */
+	public void testGetAllVerticesAndEdges() {
+		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
+		int vnum = Lists.newArrayList(graph.getVertices()).size();
+		Vertex v1 = graph.addVertex("v1");
+		Vertex v2 = graph.addVertex("v2");
+		commitIfTransactional(graph);
+
+		List<Vertex> vertices = Lists.newArrayList(graph.getVertices());
+		assertEquals(vnum + 2, vertices.size());
+
+		int edgesNum = Lists.newArrayList(graph.getEdges()).size();
+		graph.addEdge(null, v1, v2, "LINK1");
+		graph.addEdge(null, v1, v2, "LINK2");
+		commitIfTransactional(graph);
+		List<Edge> edges = Lists.newArrayList(graph.getEdges());
+		assertEquals(edgesNum + 2, edges.size());
+	}
+
 	public void testForVersionVertexProperty() {
 		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		Vertex fooV = graph.addVertex("fooV");
