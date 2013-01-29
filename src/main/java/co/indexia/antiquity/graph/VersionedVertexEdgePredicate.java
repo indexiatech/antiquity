@@ -36,6 +36,7 @@ public class VersionedVertexEdgePredicate<V extends Comparable<V>> implements Pr
 	Logger log = LoggerFactory.getLogger(VersionedVertexEdgePredicate.class);
 	private final V version;
 	private final VersionedGraph<?, V> graph;
+	private final boolean withInternalEdges;
 
 	/**
 	 * Create an instance of this class.
@@ -44,14 +45,21 @@ public class VersionedVertexEdgePredicate<V extends Comparable<V>> implements Pr
 	 *            The {@link VersionedGraph} instance associated with this predicate
 	 * @param version
 	 *            The version of the predicate
+	 * @param withInternalEdges
+	 *            if true internal edges will be included
 	 */
-	public VersionedVertexEdgePredicate(VersionedGraph<?, V> graph, V version) {
+	public VersionedVertexEdgePredicate(VersionedGraph<?, V> graph, V version, boolean withInternalEdges) {
 		this.version = version;
 		this.graph = graph;
+		this.withInternalEdges = withInternalEdges;
 	}
 
 	@Override
 	public boolean apply(Edge edge) {
+		if ((!withInternalEdges) && (graph.isHistoricalOrInternal(edge))) {
+			return false;
+		}
+
 		// Apply filtering only for versioned edges
 		// TODO: Create a better approach for finding versioned edges
 		if (!edge.getPropertyKeys().contains(VersionedGraph.VALID_MIN_VERSION_PROP_KEY))

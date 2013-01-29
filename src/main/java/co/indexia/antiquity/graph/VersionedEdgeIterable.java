@@ -37,21 +37,23 @@ class VersionedEdgeIterable<V extends Comparable<V>> implements CloseableIterabl
 	private final EventTrigger trigger;
 	private final VersionedGraph<?, V> graph;
 	private final V version;
+	private final boolean withInternalEdges;
 
 	public VersionedEdgeIterable(final Iterable<Edge> iterable, final List<GraphChangedListener> graphChangedListeners,
-			final EventTrigger trigger, VersionedGraph<?, V> graph, V version) {
+			final EventTrigger trigger, VersionedGraph<?, V> graph, V version, boolean withInternalEdges) {
 		this.iterable = iterable;
 		this.graphChangedListeners = graphChangedListeners;
 		this.trigger = trigger;
 		this.graph = graph;
 		this.version = version;
+		this.withInternalEdges = withInternalEdges;
 	}
 
 	@Override
 	public Iterator<Edge> iterator() {
 		return new Iterator<Edge>() {
 			private final Iterator<Edge> itty = Iterables.filter(iterable,
-					new VersionedVertexEdgePredicate<V>(graph, version)).iterator();
+					new VersionedVertexEdgePredicate<V>(graph, version, withInternalEdges)).iterator();
 
 			@Override
 			public void remove() {
@@ -62,7 +64,7 @@ class VersionedEdgeIterable<V extends Comparable<V>> implements CloseableIterabl
 			public Edge next() {
 				Edge edge = this.itty.next();
 
-				if (graph.isHistoricalOrInternal(edge)) {
+				if (graph.isHistoricalOrInternal(edge) || (!graph.isVersionedEdge(edge))) {
 					return edge;
 				} else {
 					return new VersionedEdge<V>(edge, graphChangedListeners, trigger, graph, version);

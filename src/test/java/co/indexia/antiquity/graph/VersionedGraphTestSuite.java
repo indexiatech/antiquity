@@ -151,8 +151,8 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 		V ver4 = graph.getLatestGraphVersion();
 		Vertex fooVLoaded = graph.getVertex(fooV.getId());
 		Vertex barVLoaded = graph.getVertex(barV.getId());
-		assertEquals(fooV, fooVLoaded);
-		assertEquals(barV, barVLoaded);
+		assertEquals(fooV.getId(), fooVLoaded.getId());
+		assertEquals(barV.getId(), barVLoaded.getId());
 
 		assertEquals(Range.range(ver2, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(fooVLoaded));
 		assertEquals(Range.range(ver4, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(barVLoaded));
@@ -192,7 +192,7 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 		assertEquals(Range.range(barVer, barPostFooRemovalVer), graph.getVersionRange(graph.getVertex(barV.getId())));
 	}
 
-	public void testVersionedVertexProperties() {
+	public void testVersionedVertexPropertiesAndItsChain() {
 		VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
 		VersionedVertex<V> v = (VersionedVertex<V>) graph.addVertex("fooV");
 		commitIfTransactional(graph);
