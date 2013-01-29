@@ -64,12 +64,16 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 
 	@Override
 	public Iterable<Edge> getEdges(final Direction direction, final String... labels) {
+		return getEdges(direction, false, labels);
+	}
+
+	public Iterable<Edge> getEdges(final Direction direction, boolean internalEdges, final String... labels) {
 		operationNotSupportedForTransient(this);
 		return new VersionedEdgeIterable<V>(((Vertex) this.baseElement).getEdges(direction, labels),
 				this.graphChangedListeners,
 				trigger,
 				graph,
-				forVersion);
+				forVersion, internalEdges);
 	}
 
 	@Override

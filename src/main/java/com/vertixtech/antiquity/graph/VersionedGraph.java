@@ -288,7 +288,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 * @param value
 	 *            The value of the property to filter vertices by
 	 * @param version
-	 *            The version to get the vertices for
+	 *            version The version to get the vertices for
 	 * @return An {@link Iterable} of the found vertices for the specified criteria.
 	 */
 	public Iterable<Vertex> getVertices(final String key, final Object value, V version) {
@@ -311,7 +311,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 				this.graphChangedListeners,
 				this.trigger,
 				this,
-				version);
+				version, false);
 	}
 
 	/**
@@ -331,7 +331,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 				this.graphChangedListeners,
 				this.trigger,
 				this,
-				version);
+				version, false);
 	}
 
 	// Get/Set Version Methods
@@ -935,19 +935,39 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 * @return true if the specified element is historical/internal
 	 */
 	public boolean isHistoricalOrInternal(Element e) {
-		return ((e.getProperty(HISTORIC_ELEMENT_PROP_KEY) != null) && ((Boolean) e.getProperty(HISTORIC_ELEMENT_PROP_KEY)));
+		if (e instanceof Vertex)
+			return (e.getPropertyKeys().contains(HISTORIC_ELEMENT_PROP_KEY));
+		else if (e instanceof Edge)
+			return ((Edge) e).getLabel().equals(PREV_VERSION_CHAIN_EDGE_TYPE);
+
+		throw new IllegalArgumentException("The specified element is unidentified.");
+
 	}
 
 	/**
-	 * Identify whether the specified {@link Element} is versioned.
+	 * Identifies whether the specified {@link Vertex} is versioned.
 	 * 
-	 * A versioned element contains for sure the 'HISTORIC_ELEMENT_PROP_KEY' property key which defines whether it is
+	 * A versioned vertex contains for sure the 'HISTORIC_ELEMENT_PROP_KEY' property key which defines whether it is
 	 * historic or not.
 	 * 
-	 * @return true if the specified element is versioned.
+	 * @param vertex
+	 *            The vertex to test
+	 * @return true if the specified vertex is versioned.
 	 */
-	public boolean isVersionedVertex(Element e) {
-		return (e.getPropertyKeys().contains(HISTORIC_ELEMENT_PROP_KEY));
+	public boolean isVersionedVertex(Vertex vertex) {
+		return (vertex.getPropertyKeys().contains(HISTORIC_ELEMENT_PROP_KEY));
+	}
+
+	/**
+	 * Identifies whether the specified {@link Edge} is versioned.
+	 * 
+	 * @param edge
+	 *            The edge to test
+	 * @return true if the specified edge is versioned.
+	 */
+	public boolean isVersionedEdge(Edge edge) {
+		return ((edge.getPropertyKeys().contains(HISTORIC_ELEMENT_PROP_KEY) || edge.getLabel()
+				.equals(PREV_VERSION_CHAIN_EDGE_TYPE)));
 	}
 
 	/**
@@ -961,7 +981,14 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	public static void getVertexChain(ArrayList<Vertex> chain, Vertex v) {
 		chain.add(v);
 
-		Iterable<Edge> edges = v.getEdges(Direction.OUT, VersionedGraph.PREV_VERSION_CHAIN_EDGE_TYPE);
+		// if it's a versionedVertex then don't filter internal edges
+		Iterable<Edge> edges = null;
+		if (v instanceof VersionedVertex<?>) {
+			edges = ((VersionedVertex) v).getEdges(Direction.OUT, true, VersionedGraph.PREV_VERSION_CHAIN_EDGE_TYPE);
+		} else {
+			edges = v.getEdges(Direction.OUT, VersionedGraph.PREV_VERSION_CHAIN_EDGE_TYPE);
+		}
+
 		if (edges.iterator().hasNext()) {
 			Vertex next = edges.iterator().next().getVertex(Direction.IN);
 			getVertexChain(chain, next);
