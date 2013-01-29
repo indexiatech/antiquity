@@ -81,7 +81,7 @@ public class VersionedVertexIterable<V extends Comparable<V>> implements Closeab
 			public Vertex next() {
 				Vertex v = this.itty.next();
 
-				if (graph.isHistoricalOrInternal(v)) {
+				if (graph.isHistoricalOrInternal(v) || (!graph.isVersionedVertex(v))) {
 					return v;
 				} else {
 					return new VersionedVertex<V>(v, graphChangedListeners, trigger, graph, version);

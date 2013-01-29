@@ -939,6 +939,18 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	}
 
 	/**
+	 * Identify whether the specified {@link Element} is versioned.
+	 * 
+	 * A versioned element contains for sure the 'HISTORIC_ELEMENT_PROP_KEY' property key which defines whether it is
+	 * historic or not.
+	 * 
+	 * @return true if the specified element is versioned.
+	 */
+	public boolean isVersionedVertex(Element e) {
+		return (e.getPropertyKeys().contains(HISTORIC_ELEMENT_PROP_KEY));
+	}
+
+	/**
 	 * Get the vertex (history) chain of the specified vertex.
 	 * 
 	 * @param chain
