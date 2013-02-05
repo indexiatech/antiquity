@@ -104,7 +104,7 @@ public class VersionContextGraph<V extends Comparable<V>> implements Graph, Wrap
 
 	@Override
 	public Vertex addVertex(Object id) {
-		return addVertex(id);
+		return graph.addVertex(id);
 	}
 
 	@Override
