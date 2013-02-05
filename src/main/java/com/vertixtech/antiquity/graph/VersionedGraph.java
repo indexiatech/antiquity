@@ -18,14 +18,6 @@
  */
 package com.vertixtech.antiquity.graph;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.tinkerpop.blueprints.Direction;
@@ -44,6 +36,14 @@ import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListene
 import com.vertixtech.antiquity.graph.identifierBehavior.GraphIdentifierBehavior;
 import com.vertixtech.antiquity.range.Range;
 import com.vertixtech.antiquity.utils.ExceptionFactory;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Versioned graph implementation,
@@ -936,7 +936,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 */
 	public boolean isHistoricalOrInternal(Element e) {
 		if (e instanceof Vertex)
-			return (e.getPropertyKeys().contains(HISTORIC_ELEMENT_PROP_KEY));
+			return (e.getPropertyKeys().contains(HISTORIC_ELEMENT_PROP_KEY) && ((Boolean) e.getProperty(HISTORIC_ELEMENT_PROP_KEY)));
 		else if (e instanceof Edge)
 			return ((Edge) e).getLabel().equals(PREV_VERSION_CHAIN_EDGE_TYPE);
 
