@@ -18,24 +18,30 @@
  */
 package com.vertixtech.antiquity.graph;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.google.common.collect.Lists;
+import com.tinkerpop.blueprints.CloseableIterable;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.Index;
+import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.TestSuite;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
 import com.vertixtech.antiquity.range.Range;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertThat;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite {
 	public VersionedGraphTestSuite() {
@@ -390,6 +396,59 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 		v = Lists.newArrayList(graph.getVertexIdentifiersIndex().get(VersionedGraph.VERTEX_ID_PROP_KEY, "foo"));
 		assertEquals(0, v.size());
 	}
+
+    public void testIndicesCreationAndDeletion() {
+        String VERTEX_IDX_TEST = "TEST_V_IDX";
+        VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
+        graph.createIndex(VERTEX_IDX_TEST, Vertex.class, new Parameter[0]);
+
+        Index<Vertex> loadedIdx = graph.getIndex(VERTEX_IDX_TEST, Vertex.class);
+        assertThat(loadedIdx, notNullValue());
+
+        graph.dropIndex(VERTEX_IDX_TEST);
+        assertThat(graph.getIndex(VERTEX_IDX_TEST, Vertex.class), nullValue());
+    }
+
+    public void testInsertAndDeleteEntriesFromIndex() {
+        VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
+        Index<Vertex> testIdx =
+                graph.createIndex("TEST_V_IDX", Vertex.class, new Parameter[0]);
+
+        Vertex fooV = graph.addVertex(1);
+        commitIfTransactional(graph);
+        V fooEmptyVersion = graph.getLatestGraphVersion();
+        commitIfTransactional(graph);
+        fooV.setProperty("key", "foo");
+        commitIfTransactional(graph);
+        testIdx.put("key", "foo", fooV);
+        V fooWithKeyVersion = graph.getLatestGraphVersion();
+
+        CloseableIterable<Vertex> loadedVertices = testIdx.get("key", "foo");
+        Iterator<Vertex> it = loadedVertices.iterator();
+        assertThat(it.hasNext(), is(Boolean.TRUE));
+        Vertex loadedFooV = it.next();
+        assertThat(loadedFooV.getId(), is(loadedFooV.getId()));
+        assertThat(fooV.getClass().getName(), is(loadedFooV.getClass()
+                .getName()));
+        // Make sure that retrieved vertex from index are versionable
+        loadedFooV.setProperty("key2", "foo2");
+        commitIfTransactional(graph);
+        V fooWithKey2Version = graph.getLatestGraphVersion();
+
+        assertThat(graph.getVertexForVersion(fooV, fooEmptyVersion)
+                .getProperty("key"), nullValue());
+        assertThat((String) graph.getVertexForVersion(fooV, fooWithKeyVersion)
+                .getProperty("key"), is("foo"));
+        assertThat((String) graph.getVertexForVersion(fooV, fooWithKey2Version)
+                .getProperty("key"), is("foo"));
+        assertThat((String) graph.getVertexForVersion(fooV, fooWithKey2Version)
+                .getProperty("key2"), is("foo2"));
+
+        // delete entry from index
+        testIdx.remove("key", "foo", fooV);
+        loadedVertices = testIdx.get("key", "foo");
+        assertThat(loadedVertices.iterator().hasNext(), is(Boolean.FALSE));
+    }
 
 	// Utils
 	// --------------------------------------------------------------
