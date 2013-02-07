@@ -26,11 +26,12 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.IndexableGraph;
+import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.wrappers.event.EventEdge;
 import com.tinkerpop.blueprints.util.wrappers.event.EventElement;
-import com.tinkerpop.blueprints.util.wrappers.event.EventGraph;
+import com.tinkerpop.blueprints.util.wrappers.event.EventIndexableGraph;
 import com.tinkerpop.blueprints.util.wrappers.event.EventVertex;
 import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListener;
 import co.indexia.antiquity.graph.identifierBehavior.GraphIdentifierBehavior;
@@ -47,15 +48,16 @@ import java.util.Set;
 
 /**
  * Versioned graph implementation,
- * 
+ *
  * <p>
  * The underline graph must support transactions.
  * </p>
- * 
+ *
  * @see Graph
  * @see TransactionalGraph
  */
-public abstract class VersionedGraph<T extends IndexableGraph, V extends Comparable<V>> extends EventGraph<T> implements GraphChangedListener {
+public abstract class VersionedGraph<T extends IndexableGraph, V extends Comparable<V>>
+        extends EventIndexableGraph<T> implements GraphChangedListener {
 	Logger log = LoggerFactory.getLogger(VersionedGraph.class);
 
 	private final static Set<String> versionedVertexInternalProperties;
@@ -77,7 +79,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * An element property key which indicates whether the element is for historical purposes or not.
-	 * 
+	 *
 	 * Historical elements are elements which were created for audit purposes and are not the active/alive data.
 	 */
 	public static final String HISTORIC_ELEMENT_PROP_KEY = "__HISTORIC__";
@@ -135,7 +137,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Create an instance of this class.
-	 * 
+	 *
 	 * @param baseGraph
 	 *            The base grap to wrap with versioning support.
 	 * @param identifierBehavior
@@ -147,7 +149,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Create an instance of {@link VersionedGraph} with the specified underline {@link Graph}.
-	 * 
+	 *
 	 * @param baseGraph
 	 *            The underline base graph
 	 * @param identifierBehavior
@@ -240,11 +242,11 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 * <p>
 	 * Get a vertex by id for the specified version.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * A vertex revision must be available for the specified version, otherwise a null will be returned.
 	 * </p>
-	 * 
+	 *
 	 * @param id
 	 *            The unique id of the vertex
 	 * @param version
@@ -266,7 +268,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Get all vertices for the specified version.
-	 * 
+	 *
 	 * @param version
 	 *            The version to get the vertices for
 	 * @return An {@link Iterable} of the found vertices for the specified version.
@@ -282,7 +284,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	/**
 	 * Return an iterable to all the vertices in the graph that have a particular key/value property for the specified
 	 * version.
-	 * 
+	 *
 	 * @param key
 	 *            The key of the property to filter vertices by
 	 * @param value
@@ -301,7 +303,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Return an iterable to all the edges in the graph for the specified version
-	 * 
+	 *
 	 * @param version
 	 *            The version to get the edges for
 	 * @return An {@link Iterable} of the found edges for the specified version.
@@ -317,7 +319,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	/**
 	 * Return an iterable to all the edges in the graph that have a particular key/value property for the specified
 	 * version.
-	 * 
+	 *
 	 * @param key
 	 *            The key of the property to filter edges by
 	 * @param value
@@ -338,7 +340,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	// --------------------------------------------------------------
 	/**
 	 * Set a version range of the specified element.
-	 * 
+	 *
 	 * @param versionedElement
 	 *            The element to set the version range.
 	 * @param range
@@ -352,7 +354,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Set the start version range of the specified element.
-	 * 
+	 *
 	 * @param versionedElement
 	 *            The element to set the start version range.
 	 * @param startVersion
@@ -365,7 +367,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Set the end version range of the specified element.
-	 * 
+	 *
 	 * @param versionedElement
 	 *            The element to set the end version range.
 	 * @param endVersion
@@ -399,7 +401,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Get the private hash of the specified vertex, return null if no private hash is set.
-	 * 
+	 *
 	 * @param vertex
 	 *            The vertex instance to get the private hash for
 	 * @return The private hash as a string
@@ -426,7 +428,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Set the start or end version of the element
-	 * 
+	 *
 	 * @param startOrEnd
 	 *            Whether to set the start or the end of the version range.
 	 * @param versionedElement
@@ -446,7 +448,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Get the start version of the specified element
-	 * 
+	 *
 	 * @param versionedElement
 	 *            The element to get the start version.
 	 * @return The start version of the specified element.
@@ -459,7 +461,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Get the end version of the specified element
-	 * 
+	 *
 	 * @param versionedElement
 	 *            The element to get the end version.
 	 * @return The end version of the specified element.
@@ -472,7 +474,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Get the version range of the specified element.
-	 * 
+	 *
 	 * @param versionedElement
 	 *            The element to get the version range for.
 	 * @return a {@link Range} of version of the specified element.
@@ -483,7 +485,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Determine whether the specified version is the start version of the specified element.
-	 * 
+	 *
 	 * @param version
 	 *            The version to determine as the start of the version range.
 	 * @param versionedElement
@@ -496,7 +498,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Determine whether the specified version is the end version of the specified element.
-	 * 
+	 *
 	 * @param version
 	 *            The version to determine as the end of the version range.
 	 * @param versionedElement
@@ -515,7 +517,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Get the maximum possible graph version.
-	 * 
+	 *
 	 * @see GraphIdentifierBehavior#getMaxPossibleGraphVersion()
 	 * @return The maximum possible graph version
 	 */
@@ -525,7 +527,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Get the next graph version.
-	 * 
+	 *
 	 * @see #allocateNextGraphVersion(Comparable)
 	 * @param allocate
 	 *            Whether to allocate the next version or not.
@@ -543,7 +545,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Allocate (persist) the specified next version in the graph in the configuration vertex.
-	 * 
+	 *
 	 * @param nextVersion
 	 *            The next version to allocate.
 	 */
@@ -554,11 +556,11 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Get the version configuration {@link Vertex}.
-	 * 
+	 *
 	 * <p>
 	 * Configuration vertex is queried very often and recommended to be cached.
 	 * </p>
-	 * 
+	 *
 	 * @return The configuration vertex of the versioned graph.
 	 */
 	public Vertex getVersionConfVertex() {
@@ -597,11 +599,42 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 		return idx;
 	}
 
+    @Override
+    public void dropIndex(final String name) {
+        this.getBaseGraph().dropIndex(name);
+    }
+
+    @Override
+    public <T extends Element> Index<T> createIndex(final String indexName,
+            final Class<T> indexClass, final Parameter... indexParameters) {
+        return new VersionedIndex<T, V>(this.getBaseGraph().createIndex(
+                indexName, indexClass, indexParameters),
+                this.graphChangedListeners, this.trigger, this);
+    }
+
+    @Override
+    public <T extends Element> Index<T> getIndex(final String indexName,
+            final Class<T> indexClass) {
+        final Index<T> index = this.baseGraph.getIndex(indexName, indexClass);
+        if (null == index)
+            return null;
+        else
+            return new VersionedIndex<T, V>(index, this.graphChangedListeners,
+                    this.trigger, this);
+    }
+
+    @Override
+    public Iterable<Index<? extends Element>> getIndices() {
+        return new VersionedIndexIterable(this.baseGraph.getIndices(),
+                this.graphChangedListeners, this.trigger, this,
+                getLatestGraphVersion());
+    }
+
 	// Methods used by events responses
 	// --------------------------------------------------------------
 	/**
 	 * Version vertices in the graph.
-	 * 
+	 *
 	 * @param version
 	 *            The graph version that created the specified vertices
 	 * @param vertices
@@ -641,7 +674,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Version edges in the graph.
-	 * 
+	 *
 	 * @param version
 	 *            The graph version that created the specified edges
 	 * @param edges
@@ -688,9 +721,9 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Create a historical vertex which contains the modified vertex content before it was modified.
-	 * 
+	 *
 	 * TODO return vertex should be immutable.
-	 * 
+	 *
 	 * @param modifiedVertex
 	 *            The modified {@link VersionedVertex}.
 	 * @param oldValues
@@ -727,7 +760,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Add the historical vertex in the vertex versions chain
-	 * 
+	 *
 	 * @param latestGraphVersion
 	 *            The latest graph version
 	 * @param newVersion
@@ -770,9 +803,9 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Version the specified modified vertex.
-	 * 
+	 *
 	 * TODO return vertex should be immutable.
-	 * 
+	 *
 	 * @param latestGraphVersion
 	 *            The latest graph version
 	 * @param newVersion
@@ -781,7 +814,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 *            The modified vertex
 	 * @param oldValues
 	 *            The old properties values of the modified vertex
-	 * 
+	 *
 	 * @return The historical created vertex
 	 */
 	protected Vertex versionModifiedVertex(V latestGraphVersion,
@@ -802,7 +835,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	/**
 	 * Get the relevant vertex revision from the history for the specified vertex and version. TODO return vertex should
 	 * be immutable.
-	 * 
+	 *
 	 * @param vertex
 	 *            The vertex to find the appropriate version for
 	 * @param version
@@ -844,9 +877,9 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	/**
 	 * Returns the property value of {@link VersionedVertex} for the specified key. Please note that this method will
 	 * return the value of the property for the specific version set in the {@link VersionedVertex}.
-	 * 
+	 *
 	 * A null will be returned if property doesn't exist for the specified {@link VersionedVertex} in its set version.
-	 * 
+	 *
 	 * @see VersionedVertex#getForVersion()
 	 * @param vertex
 	 *            The {@link VersionedVertex} to get the property value of.
@@ -880,7 +913,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	// --------------------------------------------------------------
 	/**
 	 * If the specified element supports Events, then return its base element.
-	 * 
+	 *
 	 * @param element
 	 *            The element to check whether it supports Events or not.
 	 * @return If the specified element supports Events, then return its base element.
@@ -896,7 +929,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Raise an exception of the specified {@link Element} does not support events.
-	 * 
+	 *
 	 * @param element
 	 *            The element to be checked
 	 */
@@ -908,7 +941,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Returns whether the specified property key is used internally for versioned vertices or not.
-	 * 
+	 *
 	 * @param key
 	 *            The property key to determine
 	 * @return true if property is for internal usage only
@@ -920,7 +953,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	/**
 	 * Return the key names of internal properties used by the {@code}VersionedGraph to version the {@link Graph}
 	 * {@link Element}s.
-	 * 
+	 *
 	 * @return An immutable set containing the internal property keys
 	 */
 	public static Set<String> getInternalProperties() {
@@ -929,7 +962,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Identify whether the specified {@link Element} is an historical/internal
-	 * 
+	 *
 	 * @param e
 	 *            The element to check
 	 * @return true if the specified element is historical/internal
@@ -946,10 +979,10 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Identifies whether the specified {@link Vertex} is versioned.
-	 * 
+	 *
 	 * A versioned vertex contains for sure the 'HISTORIC_ELEMENT_PROP_KEY' property key which defines whether it is
 	 * historic or not.
-	 * 
+	 *
 	 * @param vertex
 	 *            The vertex to test
 	 * @return true if the specified vertex is versioned.
@@ -960,7 +993,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Identifies whether the specified {@link Edge} is versioned.
-	 * 
+	 *
 	 * @param edge
 	 *            The edge to test
 	 * @return true if the specified edge is versioned.
@@ -972,7 +1005,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	/**
 	 * Get the vertex (history) chain of the specified vertex.
-	 * 
+	 *
 	 * @param chain
 	 *            An empty list that will contain the history chain
 	 * @param v
