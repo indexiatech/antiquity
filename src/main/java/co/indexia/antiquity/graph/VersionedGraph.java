@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Features;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.IndexableGraph;
@@ -135,6 +136,11 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 */
 	protected final Configuration conf;
 
+    /**
+     * Supported graph features
+     */
+    private final Features features;
+
 	/**
 	 * Create an instance of this class.
 	 *
@@ -166,6 +172,9 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 			this.conf = new Configuration();
 		else
 			this.conf = conf;
+
+        this.features = this.baseGraph.getFeatures().copyFeatures();
+        features.isWrapper = true;
 
 		// TODO: A better approach to do that
 		// Create the conf vertex if it does not exist
@@ -335,6 +344,11 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 				this,
 				version, false);
 	}
+
+    @Override
+    public Features getFeatures() {
+        return features;
+    }
 
 	// Get/Set Version Methods
 	// --------------------------------------------------------------
