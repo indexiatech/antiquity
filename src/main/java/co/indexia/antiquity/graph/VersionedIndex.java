@@ -15,15 +15,13 @@ import java.util.List;
 /**
  * An @{link Index} that decorates versioned graph elements.
  */
-public class VersionedIndex<T extends Element, V extends Comparable<V>>
-        implements Index<T> {
+public class VersionedIndex<T extends Element, V extends Comparable<V>> implements Index<T> {
     protected final Index<T> rawIndex;
     protected final List<GraphChangedListener> graphChangedListeners;
     private final EventTrigger trigger;
     private final VersionedGraph<?, V> graph;
 
-    public VersionedIndex(final Index<T> rawIndex,
-            final List<GraphChangedListener> graphChangedListeners,
+    public VersionedIndex(final Index<T> rawIndex, final List<GraphChangedListener> graphChangedListeners,
             final EventTrigger trigger, final VersionedGraph<?, V> graph) {
         this.rawIndex = rawIndex;
         this.graphChangedListeners = graphChangedListeners;
@@ -33,27 +31,22 @@ public class VersionedIndex<T extends Element, V extends Comparable<V>>
 
     @Override
     public void remove(final String key, final Object value, final T element) {
-        this.rawIndex.remove(key, value,
-                (T) ((EventElement) element).getBaseElement());
+        this.rawIndex.remove(key, value, (T) ((EventElement) element).getBaseElement());
     }
 
     @Override
     public void put(final String key, final Object value, final T element) {
-        this.rawIndex.put(key, value,
-                (T) ((EventElement) element).getBaseElement());
+        this.rawIndex.put(key, value, (T) ((EventElement) element).getBaseElement());
     }
 
     @Override
     public CloseableIterable<T> get(final String key, final Object value) {
         if (Vertex.class.isAssignableFrom(this.getIndexClass())) {
-            return new VersionedVertexIterable(this.rawIndex.get(key, value),
-                    this.graphChangedListeners, this.trigger, graph,
-                    graph.getLatestGraphVersion());
+            return new VersionedVertexIterable(this.rawIndex.get(key, value), this.graphChangedListeners, this.trigger,
+                    graph, graph.getLatestGraphVersion());
         } else {
-            return (CloseableIterable<T>) new VersionedEdgeIterable<V>(
-                    (Iterable<Edge>) this.rawIndex.get(key, value),
-                    this.graphChangedListeners, trigger, graph,
-                    graph.getLatestGraphVersion(), false);
+            return (CloseableIterable<T>) new VersionedEdgeIterable<V>((Iterable<Edge>) this.rawIndex.get(key, value),
+                    this.graphChangedListeners, trigger, graph, graph.getLatestGraphVersion(), false);
         }
     }
 
