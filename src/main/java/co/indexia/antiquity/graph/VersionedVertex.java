@@ -46,7 +46,7 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 	/**
 	 * Whether this this is transient or not, Transient indicates that this instance was just created and was never
 	 * persisted before,
-	 * 
+	 *
 	 * Several commands such as getting properties or associated edges will throw an exception when dealing with
 	 * transient vertices.
 	 */
@@ -69,6 +69,7 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 
 	public Iterable<Edge> getEdges(final Direction direction, boolean internalEdges, final String... labels) {
 		operationNotSupportedForTransient(this);
+
 		return new VersionedEdgeIterable<V>(((Vertex) this.baseElement).getEdges(direction, labels),
 				this.graphChangedListeners,
 				trigger,
@@ -89,7 +90,7 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 	/**
 	 * Set the specified value for the specified property key only if the new value is different from the current
 	 * property.
-	 * 
+	 *
 	 * @param key
 	 * @param value
 	 */
@@ -113,10 +114,10 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 
 	/**
 	 * Get the forVersion property of the vertex.
-	 * 
+	 *
 	 * This property defines the version context of the vertex, Properties and edges will be filtered according to the
 	 * set version.
-	 * 
+	 *
 	 * @return The current version bound to the vertex
 	 */
 	public V getForVersion() {
@@ -125,7 +126,7 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 
 	/**
 	 * The forVersion property of the vertex
-	 * 
+	 *
 	 * @see #getForVersion()
 	 * @param forVersion
 	 *            The forVersion property
@@ -136,7 +137,7 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 
 	/**
 	 * Whether this instance is transient or not.
-	 * 
+	 *
 	 * @return true if this instance is transient.
 	 */
 	public boolean isTrans() {
@@ -145,7 +146,7 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 
 	/**
 	 * Set the transient property.
-	 * 
+	 *
 	 * @param trans
 	 *            The value to set
 	 */
@@ -155,7 +156,7 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 
 	/**
 	 * Throw an exception that the operation is unsupported in case this instance is transient.
-	 * 
+	 *
 	 * @param v
 	 *            The vertex to test.
 	 */
@@ -163,4 +164,13 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
 		if (v.isTrans())
 			throw new IllegalStateException(String.format("The operation is not supported by transient vertex[%s]", v));
 	}
+
+    @Override
+    public Object getId() {
+        if (graph.isNaturalIds()) {
+            return baseElement.getProperty(VersionedGraph.NATURAL_ID_PROP_KEY);
+        } else {
+            return super.getId();
+        }
+    }
 }
