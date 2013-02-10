@@ -48,9 +48,9 @@ public class VersionContextGraphTest {
 	static private TransactionalVersionedGraph<Neo4jGraph, Long> graph;
 	static int initialVerticesAmount;
 	static Vertex vertex1;
-	static Long vertex1Id;
+	static String vertex1Id;
 	static Long ver1;
-	static Long vertex2Id;
+	static String vertex2Id;
 	static Vertex vertex2;
 	static Edge e1;
 	static Long ver2;
@@ -67,13 +67,13 @@ public class VersionContextGraphTest {
 
 		initialVerticesAmount = Lists.newArrayList(graph.getVertices()).size();
 		vertex1 = graph.addVertex("foo");
-		vertex1Id = (Long) vertex1.getId();
+		vertex1Id = (String) vertex1.getId();
 		vertex1.setProperty("fooKey1", "foo1");
 		vertex1.setProperty("fooKey2", "foo2");
 		graph.commit();
 		ver1 = graph.getLatestGraphVersion();
 		vertex2 = graph.addVertex("bar");
-		vertex2Id = (Long) vertex2.getId();
+		vertex2Id = (String) vertex2.getId();
 		vertex2.setProperty("barKey1", "bar1");
 		vertex2.setProperty("barKey2", "bar2");
 		vertex1.setProperty("fooKey1", "foo1New");

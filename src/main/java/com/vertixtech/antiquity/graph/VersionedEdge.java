@@ -18,14 +18,14 @@
  */
 package com.vertixtech.antiquity.graph;
 
-import java.util.List;
-
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.wrappers.event.EventEdge;
 import com.tinkerpop.blueprints.util.wrappers.event.EventTrigger;
 import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListener;
+
+import java.util.List;
 
 /**
  * An {@link Edge} implementation that supports versioning capabilities.
@@ -52,4 +52,13 @@ public class VersionedEdge<V extends Comparable<V>> extends EventEdge {
 				graph,
 				version);
 	}
+
+    @Override
+    public Object getId() {
+        if (graph.isNaturalIds()) {
+            return baseElement.getProperty(VersionedGraph.NATURAL_ID_PROP_KEY);
+        } else {
+            return super.getId();
+        }
+    }
 }

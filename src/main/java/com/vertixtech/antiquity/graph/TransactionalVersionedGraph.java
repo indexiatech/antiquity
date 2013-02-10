@@ -18,22 +18,23 @@
  */
 package com.vertixtech.antiquity.graph;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.IndexableGraph;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.wrappers.event.EventTrigger;
+import com.tinkerpop.blueprints.util.wrappers.id.IdGraph.IdFactory;
 import com.vertixtech.antiquity.graph.identifierBehavior.GraphIdentifierBehavior;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A transactional implementation of {@link VersionedGraph}.
- * 
+ *
  * @see TransactionalGraph
  * @see VersionedGraph
  * @param <T>
@@ -52,13 +53,13 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
 	};
 
 	public TransactionalVersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
-		super(baseGraph, identifierBehavior, null);
+        super(baseGraph, identifierBehavior, null, null, null);
 	}
 
 	public TransactionalVersionedGraph(T baseGraph,
 			GraphIdentifierBehavior<V> identifierBehavior,
-			Configuration configuration) {
-		super(baseGraph, identifierBehavior, configuration);
+            Configuration configuration, IdFactory vertexIdFactory, IdFactory edgeIdFactory) {
+        super(baseGraph, identifierBehavior, configuration, vertexIdFactory, edgeIdFactory);
 		this.trigger = new EventTrigger(this, true);
 	}
 
@@ -119,7 +120,7 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
 
 	/**
 	 * Handles the {@link TransactionData} associated with this graph.
-	 * 
+	 *
 	 * @see TransactionData
 	 * @param nextVersion
 	 *            The next version of the transaction to be committed.
@@ -224,11 +225,11 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
 	 * <p>
 	 * Put the specified property key/value in the specified map.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * If map is null a new map will be created
 	 * </p>
-	 * 
+	 *
 	 * @param map
 	 *            A map of properties to hold the specified key/value property
 	 * @param key

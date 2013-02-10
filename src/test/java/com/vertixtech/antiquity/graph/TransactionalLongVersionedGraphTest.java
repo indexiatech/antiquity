@@ -18,13 +18,6 @@
  */
 package com.vertixtech.antiquity.graph;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-
-import junit.framework.Assert;
-
-import org.neo4j.test.ImpermanentGraphDatabase;
-
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.TestSuite;
 import com.tinkerpop.blueprints.TransactionalGraph;
@@ -32,6 +25,18 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.neo4j.Neo4jGraph;
 import com.vertixtech.antiquity.graph.identifierBehavior.LongGraphIdentifierBehavior;
 import com.vertixtech.antiquity.range.Range;
+
+import junit.framework.Assert;
+
+import org.neo4j.test.ImpermanentGraphDatabase;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertThat;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.UUID;
 
 public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
 	public TransactionalVersionedGraph<Neo4jGraph, Long> graph;
@@ -50,7 +55,8 @@ public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
 	@Override
 	public Graph generateGraph(final String graphDirectoryName, Configuration conf) {
 		Neo4jGraph baseGraph = new Neo4jGraph(new ImpermanentGraphDatabase());
-		return new TransactionalVersionedGraph<Neo4jGraph, Long>(baseGraph, new LongGraphIdentifierBehavior(), conf);
+        return new TransactionalVersionedGraph<Neo4jGraph, Long>(baseGraph, new LongGraphIdentifierBehavior(), conf,
+                null, null);
 	}
 
 	@Override
@@ -161,9 +167,9 @@ public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
 
 	/**
 	 * Empty transactions should not be versioned.
-	 * 
+	 *
 	 * This is the expected default graph configuration behavior
-	 * 
+	 *
 	 * @see Configuration#doNotVersionEmptyTransactions
 	 */
 	public void testEmptyTransactionShouldNotBeVersioned() {
@@ -173,4 +179,28 @@ public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
 		graph.commit();
 		assertEquals(ver1, graph.getLatestGraphVersion());
 	}
+
+    /**
+     * Ensure that natural IDs are enabled. This is expected because graph conf
+     * {@link Configuration#useNaturalIdsOnlyIfSuppliedIdsAreIgnored} is true
+     * and the underline is neo4j and it ignores supplied keys
+     */
+	public void testIsNatureIdsEnabled() {
+        assertThat(graph.isNaturalIds(), is(Boolean.TRUE));
+	}
+
+    public void testNaturalIds() {
+        String vId = "TEST-ID";
+        Vertex v = graph.addVertex(vId);
+        graph.commit();
+        assertThat(v.getId(), is((Object) vId));
+
+        Vertex vLoaded = graph.getVertex(vId);
+        assertThat(vLoaded, notNullValue());
+        assertThat(vLoaded.getId(), is(v.getId()));
+
+        Vertex v1 = graph.addVertex(null);
+        assertThat(v1.getId(), notNullValue());
+        UUID.fromString((String)v1.getId());
+    }
 }

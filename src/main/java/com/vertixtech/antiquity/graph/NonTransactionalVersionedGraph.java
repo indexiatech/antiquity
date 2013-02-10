@@ -18,21 +18,22 @@
  */
 package com.vertixtech.antiquity.graph;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.IndexableGraph;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.util.wrappers.id.IdGraph.IdFactory;
+import com.vertixtech.antiquity.graph.identifierBehavior.GraphIdentifierBehavior;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.IndexableGraph;
-import com.tinkerpop.blueprints.Vertex;
-import com.vertixtech.antiquity.graph.identifierBehavior.GraphIdentifierBehavior;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A non transactional {@link VersionedGraph} implementation.
- * 
+ *
  * @param <T>
  *            The type of the graph
  * @param <V>
@@ -43,7 +44,7 @@ public class NonTransactionalVersionedGraph<T extends IndexableGraph, V extends 
 
 	/**
 	 * Create an instance of this class.
-	 * 
+	 *
 	 * @param baseGraph
 	 *            The base class to wrap with versioning support
 	 * @param identifierBehavior
@@ -55,7 +56,7 @@ public class NonTransactionalVersionedGraph<T extends IndexableGraph, V extends 
 
 	/**
 	 * Create an instance of this class.
-	 * 
+	 *
 	 * @param baseGraph
 	 *            The base class to wrap with versioning support
 	 * @param identifierBehavior
@@ -63,8 +64,9 @@ public class NonTransactionalVersionedGraph<T extends IndexableGraph, V extends 
 	 * @param conf
 	 *            The configuration instance of this instance.
 	 */
-	public NonTransactionalVersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior, Configuration conf) {
-		super(baseGraph, identifierBehavior, conf);
+    public NonTransactionalVersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior,
+            Configuration conf, IdFactory vertexIdFactory, IdFactory edgeIdFactory) {
+        super(baseGraph, identifierBehavior, conf, vertexIdFactory, edgeIdFactory);
 	}
 
 	// Versioned Graph Events

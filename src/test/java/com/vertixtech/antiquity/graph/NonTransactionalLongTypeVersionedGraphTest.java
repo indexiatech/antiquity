@@ -18,12 +18,15 @@
  */
 package com.vertixtech.antiquity.graph;
 
-import java.lang.reflect.Method;
-
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.TestSuite;
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
 import com.vertixtech.antiquity.graph.identifierBehavior.LongGraphIdentifierBehavior;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
+import java.lang.reflect.Method;
 
 public class NonTransactionalLongTypeVersionedGraphTest extends VersionedGraphTest {
 	private VersionedGraph<TinkerGraph, Long> graph;
@@ -42,7 +45,7 @@ public class NonTransactionalLongTypeVersionedGraphTest extends VersionedGraphTe
 	@Override
 	public Graph generateGraph(String graphDirectoryName, Configuration conf) {
 		return new NonTransactionalVersionedGraph<TinkerGraph, Long>(new TinkerGraph(),
-				new LongGraphIdentifierBehavior(), conf);
+                new LongGraphIdentifierBehavior(), conf, null, null);
 	}
 
 	@Override
@@ -66,4 +69,13 @@ public class NonTransactionalLongTypeVersionedGraphTest extends VersionedGraphTe
 		doTestSuite(new VersionedGraphTestSuite<Long>(this));
 		printTestPerformance("GraphTestSuite", this.stopWatch());
 	}
+
+    /**
+     * Ensure that natural IDs are disabled. This is expected because graph conf
+     * {@link Configuration#useNaturalIdsOnlyIfSuppliedIdsAreIgnored} is true
+     * and the underline is tinker-graph and does not ignore supplied keys
+     */
+    public void testEnsureThatNativeIdsDisabled() {
+        assertThat(graph.isNaturalIds(), is(Boolean.FALSE));
+    }
 }
