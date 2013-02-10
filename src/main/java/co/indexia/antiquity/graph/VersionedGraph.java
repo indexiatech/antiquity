@@ -27,6 +27,7 @@ import com.tinkerpop.blueprints.Features;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.IndexableGraph;
+import com.tinkerpop.blueprints.KeyIndexableGraph;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
@@ -35,6 +36,7 @@ import com.tinkerpop.blueprints.util.wrappers.event.EventElement;
 import com.tinkerpop.blueprints.util.wrappers.event.EventIndexableGraph;
 import com.tinkerpop.blueprints.util.wrappers.event.EventVertex;
 import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListener;
+import com.tinkerpop.blueprints.util.wrappers.id.IdGraph.IdFactory;
 import co.indexia.antiquity.graph.identifierBehavior.GraphIdentifierBehavior;
 import co.indexia.antiquity.range.Range;
 import co.indexia.antiquity.utils.ExceptionFactory;
@@ -43,9 +45,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Versioned graph implementation,
@@ -57,14 +61,13 @@ import java.util.Set;
  * @see Graph
  * @see TransactionalGraph
  */
-public abstract class VersionedGraph<T extends IndexableGraph, V extends Comparable<V>>
-        extends EventIndexableGraph<T> implements GraphChangedListener {
+public abstract class VersionedGraph<T extends IndexableGraph, V extends Comparable<V>> extends EventIndexableGraph<T>
+        implements GraphChangedListener, KeyIndexableGraph {
 	Logger log = LoggerFactory.getLogger(VersionedGraph.class);
 
 	private final static Set<String> versionedVertexInternalProperties;
 
-	// Versioned Vertex internal properties
-	// --------------------------------------------------------------
+    // ----- Versioned Vertex internal properties
 	/**
 	 * A marker property key which indicates that the {@link Element} is removed.
 	 */
@@ -90,13 +93,12 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 */
 	public static final String PRIVATE_HASH_PROP_KEY = "__PRIVATE_HASH__";
 
-	/**
-	 * The key name of the natural identifier of a vertex.
-	 */
-	public static final String VERTEX_ID_PROP_KEY = "__ID__";
+    /**
+     * The key name of the natural identifier of a vertex.
+     */
+    public static final String NATURAL_ID_PROP_KEY = "__ID__";
 
-	// General Internal Properties
-	// --------------------------------------------------------------
+    // ----- General Internal Properties
 	/**
 	 * The identifier of the graph configuration vertex
 	 */
@@ -123,17 +125,25 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	protected final GraphIdentifierBehavior<V> identifierBehavior;
 
 	static {
-		versionedVertexInternalProperties =
-				ImmutableSet.of(REMOVED_PROP_KEY,
-						VALID_MIN_VERSION_PROP_KEY,
-						VALID_MAX_VERSION_PROP_KEY,
-						HISTORIC_ELEMENT_PROP_KEY,
-						PRIVATE_HASH_PROP_KEY);
+        versionedVertexInternalProperties =
+                ImmutableSet.of(REMOVED_PROP_KEY, VALID_MIN_VERSION_PROP_KEY, VALID_MAX_VERSION_PROP_KEY,
+                        HISTORIC_ELEMENT_PROP_KEY, PRIVATE_HASH_PROP_KEY, NATURAL_ID_PROP_KEY);
 	}
 
-	/**
-	 * The graph configuration
-	 */
+    // ----- Class level properties.
+    /**
+     * Vertex ID factory. (required only if {@link #isNaturalIds()} is true)
+     */
+    private IdFactory vertexIdFactory;
+
+    /**
+     * Edge ID factory. (required only if {@link #isNaturalIds()} is true)
+     */
+    private IdFactory edgeIdFactory;
+
+    /**
+     * Graph configuration
+     */
 	protected final Configuration conf;
 
     /**
@@ -145,25 +155,26 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 * Create an instance of this class.
 	 *
 	 * @param baseGraph
-	 *            The base grap to wrap with versioning support.
+	 *            The base graph to wrap with versioning support.
 	 * @param identifierBehavior
 	 *            The graph identifier behavior implementation.
 	 */
-	public VersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
-		this(baseGraph, identifierBehavior, null);
+    public VersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
+        this(baseGraph, identifierBehavior, null, null, null);
 	}
 
-	/**
-	 * Create an instance of {@link VersionedGraph} with the specified underline {@link Graph}.
-	 *
-	 * @param baseGraph
-	 *            The underline base graph
-	 * @param identifierBehavior
-	 *            The graph identifier behavior implementation
-	 * @param conf
-	 *            The configuration instance of this instance.
-	 */
-	public VersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior, Configuration conf) {
+    /**
+     * Create an instance of {@link VersionedGraph} with the specified underline
+     * {@link Graph}.
+     *
+     * @param baseGraph The underline base graph
+     * @param identifierBehavior The graph identifier behavior implementation
+     * @param conf The configuration instance of this instance.
+     * @param vertexIdFactory The {@link IdFactory} of new vertices.
+     * @param edgeIdFactory The {@link IdFactory} of new edges.
+     */
+    public VersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior, Configuration conf,
+            final IdFactory vertexIdFactory, final IdFactory edgeIdFactory) {
 		super(baseGraph);
 		addListener(this);
 		this.identifierBehavior = identifierBehavior;
@@ -175,8 +186,23 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
         this.features = this.baseGraph.getFeatures().copyFeatures();
         features.isWrapper = true;
+        features.ignoresSuppliedIds = false;
 
-		// TODO: A better approach to do that
+        if (isNaturalIds()) {
+            // assure base graph supports vertex/edge,key indices
+            if (!getFeatures().supportsKeyIndices || !getFeatures().supportsVertexIndex
+                    || !getFeatures().supportsEdgeIndex) {
+                throw new IllegalStateException(
+                        "With natural IDs enabled, The underline database must support vertex/edge,key indices.");
+            }
+
+            this.vertexIdFactory = null == vertexIdFactory ? new DefaultIdFactory() : vertexIdFactory;
+            this.edgeIdFactory = null == edgeIdFactory ? new DefaultIdFactory() : edgeIdFactory;
+
+            createNaturalIdIndices();
+        }
+
+        // TODO: A better approach is required
 		// Create the conf vertex if it does not exist
 		if (getVersionConfVertex() == null) {
 			Vertex v = baseGraph.addVertex(GRAPH_CONF_VERTEX_ID);
@@ -186,24 +212,27 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 		}
 	}
 
-	// Operation Overrides
+    // Graph operation overrides
 	// --------------------------------------------------------------
 	@Override
 	public Vertex addVertex(final Object id) {
-		final Vertex vertex = this.baseGraph.addVertex(id);
-		if (vertex == null) {
-			return null;
-		} else {
-			VersionedVertex vv = new VersionedVertex<V>(vertex,
-					this.graphChangedListeners,
-					this.trigger,
-					this,
-					getLatestGraphVersion());
-			vv.setTrans(true);
-			this.onVertexAdded(vv);
+        validateNewId(id, Vertex.class);
 
-			return vv;
-		}
+        final Vertex vertex;
+        if (isNaturalIds()) {
+            vertex = baseGraph.addVertex(null);
+            Object idVal = id == null ? vertexIdFactory.createId() : id;
+            vertex.setProperty(NATURAL_ID_PROP_KEY, idVal);
+        } else {
+            vertex = baseGraph.addVertex(id);
+        }
+
+        VersionedVertex vv =
+                new VersionedVertex<V>(vertex, this.graphChangedListeners, this.trigger, this, getLatestGraphVersion());
+        vv.setTrans(true);
+        this.onVertexAdded(vv);
+
+        return vv;
 	}
 
 	@Override
@@ -221,6 +250,26 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 		return getVertices(key, value, getLatestGraphVersion());
 	}
 
+    @Override
+    public Edge addEdge(final Object id, final Vertex outVertex, final Vertex inVertex, final String label) {
+        validateNewId(id, Edge.class);
+
+        // FIXME: Currently impossible as reading properties of transient.
+        // vertices is not supported.
+        // isVersionedVertex(outVertex);
+        // isVersionedVertex(inVertex);
+
+        if (isNaturalIds()) {
+            Edge edge = super.addEdge(null, outVertex, inVertex, label);
+            Object idVal = null == id ? edgeIdFactory.createId() : id;
+            edge.setProperty(NATURAL_ID_PROP_KEY, idVal);
+
+            return edge;
+        } else {
+            return super.addEdge(id, outVertex, inVertex, label);
+        }
+    }
+
 	@Override
 	public Iterable<Edge> getEdges() {
 		return getEdges(getLatestGraphVersion());
@@ -228,6 +277,9 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 	@Override
 	public Iterable<Edge> getEdges(final String key, final Object value) {
+        // TODO: Consider forbidding retrieving edges by internal keys
+        // (especially NATURAL_ID_PROP_KEY), otherwise throw exception.
+
 		return getEdges(key, value, getLatestGraphVersion());
 	}
 
@@ -244,6 +296,11 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 		this.onEdgeRemoved(edge);
 	}
+
+    @Override
+    public Features getFeatures() {
+        return features;
+    }
 
 	// Enhanced methods for the standard blueprint graph API
 	// ------------------------------------------------------
@@ -263,15 +320,35 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 * @return The found vertex, or null if not found
 	 */
 	public Vertex getVertex(final Object id, V version) {
-		final Vertex vertex = this.baseGraph.getVertex(id);
-		if (vertex == null) {
-			return null;
-		} else {
+        if (null == id) {
+            throw new IllegalArgumentException("Vertex ID cannot be null");
+        }
+
+        Vertex vertex = null;
+        if (isNaturalIds()) {
+            final Iterable<Vertex> i = baseGraph.getVertices(NATURAL_ID_PROP_KEY, id);
+            final Iterator<Vertex> iter = i.iterator();
+            if (!iter.hasNext()) {
+                return null;
+            } else {
+                vertex = iter.next();
+
+                if (iter.hasNext()) {
+                    throw new IllegalStateException("Multiple vertices exist with the same ID [" + id + "]");
+                }
+            }
+        } else {
+            vertex = baseGraph.getVertex(id);
+        }
+
+        if (vertex != null) {
 			if (isHistoricalOrInternal(vertex)) {
 				return vertex;
 			} else {
 				return new VersionedVertex<V>(vertex, this.graphChangedListeners, this.trigger, this, version);
 			}
+        } else {
+            return null;
 		}
 	}
 
@@ -279,7 +356,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 * Get all vertices for the specified version.
 	 *
 	 * @param version
-	 *            The version to get the vertices for
+	 *            The version to get all vertices for
 	 * @return An {@link Iterable} of the found vertices for the specified version.
 	 */
 	public Iterable<Vertex> getVertices(V version) {
@@ -303,6 +380,8 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 * @return An {@link Iterable} of the found vertices for the specified criteria.
 	 */
 	public Iterable<Vertex> getVertices(final String key, final Object value, V version) {
+        // TODO: Consider forbidding retrieving edges by internal keys
+        // (especially NATURAL_ID_PROP_KEY), otherwise throw exception.
 		return new VersionedVertexIterable<V>(this.baseGraph.getVertices(key, value),
 				this.graphChangedListeners,
 				this.trigger,
@@ -338,17 +417,14 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 	 * @return An {@link Iterable} of the found edges for the specified criteria
 	 */
 	public Iterable<Edge> getEdges(final String key, final Object value, V version) {
+        // TODO: Consider forbidding retrieving edges by internal keys
+        // (especially NATURAL_ID_PROP_KEY), otherwise throw exception.
 		return new VersionedEdgeIterable<V>(this.baseGraph.getEdges(key, value),
 				this.graphChangedListeners,
 				this.trigger,
 				this,
 				version, false);
 	}
-
-    @Override
-    public Features getFeatures() {
-        return features;
-    }
 
 	// Get/Set Version Methods
 	// --------------------------------------------------------------
@@ -593,10 +669,49 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 		} else {
 			return v;
 		}
-
 		// if (v == null)
 		// throw new RuntimeException("Could not find the graph configuration vertex");
 	}
+
+    /**
+     * Whether or not graph is configured to maintain natural IDs.
+     *
+     * @return true if graph is configured to maintain natural IDs.
+     */
+    public boolean isNaturalIds() {
+        return (conf.getUseNaturalIds() || (conf.getUseNaturalIdsOnlyIfSuppliedIdsAreIgnored() && getBaseGraph()
+                .getFeatures().ignoresSuppliedIds));
+    }
+
+    /**
+     * Create the natural ID key indices
+     */
+    public void createNaturalIdIndices() {
+        KeyIndexableGraph keyIndexedGraph = (KeyIndexableGraph) getBaseGraph();
+        if (!keyIndexedGraph.getIndexedKeys(Vertex.class).contains(NATURAL_ID_PROP_KEY)) {
+            keyIndexedGraph.createKeyIndex(NATURAL_ID_PROP_KEY, Vertex.class);
+        }
+
+        if (!keyIndexedGraph.getIndexedKeys(Edge.class).contains(NATURAL_ID_PROP_KEY)) {
+            keyIndexedGraph.createKeyIndex(NATURAL_ID_PROP_KEY, Edge.class);
+        }
+    }
+
+    /**
+     * Ensure that the new specified ID is valid.
+     *
+     * @param newId The new ID to verify
+     * @param elementType The element type (Edge or Vertex)
+     */
+    public <T extends Element> void validateNewId(Object newId, Class<T> elementType) {
+        if (isNaturalIds()) {
+            boolean isVertex = (elementType.isAssignableFrom(Vertex.class));
+            if (newId != null && (isVertex ? getVertex(newId) : getEdge(newId)) != null) {
+                throw new IllegalArgumentException(String.format("%s with the given ID [%s] already exists.",
+                        elementType.getSimpleName(), newId));
+            }
+        }
+    }
 
 	// Indices
 	// --------------------------------------------------------------
@@ -644,6 +759,50 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
                 getLatestGraphVersion());
     }
 
+    @Override
+    public <T extends Element> void dropKeyIndex(final String key, final Class<T> elementClass) {
+        validateBaseGraphIsKeyIndexable();
+
+        if (isNaturalIds()) {
+            if (key.equals(NATURAL_ID_PROP_KEY)) {
+                throw new IllegalArgumentException(String.format("Key [%s] is reserved and cannot be dropped.",
+                        NATURAL_ID_PROP_KEY));
+            }
+        }
+
+        ((KeyIndexableGraph) baseGraph).dropKeyIndex(key, elementClass);
+    }
+
+    @Override
+    public <T extends Element> void createKeyIndex(final String key, final Class<T> elementClass,
+            final Parameter... indexParameters) {
+        validateBaseGraphIsKeyIndexable();
+
+        if (key.equals(NATURAL_ID_PROP_KEY)) {
+            throw new IllegalArgumentException(String.format("Index key [%s] is reserved and cannot be created",
+                    NATURAL_ID_PROP_KEY));
+        }
+
+        ((KeyIndexableGraph) baseGraph).createKeyIndex(key, elementClass, indexParameters);
+    }
+
+    @Override
+    public <T extends Element> Set<String> getIndexedKeys(final Class<T> elementClass) {
+        validateBaseGraphIsKeyIndexable();
+
+        final Set<String> keys = new HashSet<String>();
+        keys.addAll(((KeyIndexableGraph) baseGraph).getIndexedKeys(elementClass));
+        keys.remove(NATURAL_ID_PROP_KEY);
+        return keys;
+    }
+
+    private void validateBaseGraphIsKeyIndexable() {
+        if (!(getBaseGraph() instanceof KeyIndexableGraph)) {
+            throw new IllegalStateException(String.format("Base graph [%s] does not support keys indices.",
+                    getBaseGraph().getClass().getSimpleName()));
+        }
+    }
+
 	// Methods used by events responses
 	// --------------------------------------------------------------
 	/**
@@ -663,23 +822,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 			VersionedVertex<V> vv = ((VersionedVertex<V>) v);
 			vv.setForVersion(version);
 			vv.setTrans(false);
-			// for non transactional graphs, set the _ID
-			if (v.getProperty(VERTEX_ID_PROP_KEY) == null && (!(this instanceof TransactionalGraph))) {
-				vv.getBaseVertex().setProperty(VERTEX_ID_PROP_KEY, v.getId());
-			}
 
-			if (conf.getAutoIndexVertexIdProperty()) {
-				if (vv.getBaseVertex().getProperty(VERTEX_ID_PROP_KEY) != null) {
-					getVertexIdentifiersIndex().put(VERTEX_ID_PROP_KEY,
-							vv.getBaseVertex().getProperty(VERTEX_ID_PROP_KEY),
-							vv.getBaseVertex());
-				} else {
-					throw new IllegalStateException(String.format("Vertex [%s] does not contain property %s and auto _ID index is enabled"
-							,
-							v,
-							VERTEX_ID_PROP_KEY));
-				}
-			}
 			if (conf.getPrivateVertexHashEnabled()) {
 				setPrivateHash(v);
 			}
@@ -712,17 +855,6 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 
 			getNonEventElement(v).setProperty(REMOVED_PROP_KEY, nextVer);
 			getNonEventElement(v).setProperty(VALID_MAX_VERSION_PROP_KEY, maxVer);
-
-			if (conf.getAutoIndexVertexIdProperty() && v.getProperty(VERTEX_ID_PROP_KEY) != null) {
-				Iterable<Vertex> it =
-						getVertexIdentifiersIndex().get(VERTEX_ID_PROP_KEY, v.getProperty(VERTEX_ID_PROP_KEY));
-				if (it.iterator().hasNext()) {
-					Vertex vertexInIdx = it.iterator().next();
-					getVertexIdentifiersIndex().remove(VERTEX_ID_PROP_KEY,
-							v.getProperty(VERTEX_ID_PROP_KEY),
-							vertexInIdx);
-				}
-			}
 		}
 	}
 
@@ -1041,4 +1173,15 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
 			getVertexChain(chain, next);
 		}
 	}
+
+
+    /**
+     * Default (UUID based) ID factory for Vertices and Edges.
+     */
+    private static class DefaultIdFactory implements IdFactory {
+        @Override
+        public Object createId() {
+            return UUID.randomUUID().toString();
+        }
+    }
 }

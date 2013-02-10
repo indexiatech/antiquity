@@ -18,8 +18,10 @@
  */
 package co.indexia.antiquity.graph;
 
+import com.tinkerpop.blueprints.Features;
+
 /**
- * Configuraiton provides a list of properties which defines the behavior of the associated {@link VersionedGraph}.
+ * Configuration provides a list of properties which defines the behavior of the associated {@link VersionedGraph}.
  */
 public class Configuration {
 	/**
@@ -27,30 +29,39 @@ public class Configuration {
 	 */
 	public final Boolean privateVertexHashEnabled;
 
-	/**
-	 * If true an index is maintained for the id property of the vertex
-	 */
-	public final Boolean autoIndexVertexIdProperty;
+    /**
+     * If true natural IDs will be used instead of internal graph IDs, This is
+     * useful since some of the graphs ignores supplied IDs.
+     *
+     * @see Features#ignoresSuppliedIds
+     */
+    public final Boolean useNaturalIds;
 
+    /**
+     * If true, natural IDs will be used only if the underline graph ignores
+     * supplied IDs.
+     */
+    public final Boolean useNaturalIdsOnlyIfSuppliedIdsAreIgnored;
 	/**
 	 * If true an empty transaction won't be versioned.
-	 * 
+	 *
 	 * This is only relevant to transactional graphs
 	 */
 	public final Boolean doNotVersionEmptyTransactions;
 
 	/**
 	 * Create an instance of this class with the specified configuration properties.
-	 * 
+	 *
 	 * @param privateVertexHashEnabled
-	 * @param autoIndexVertexIdProperty
+	 * @param useNaturalIds
 	 * @param doNotVersionEmptyTransactions
 	 */
-	public Configuration(Boolean privateVertexHashEnabled,
-			Boolean autoIndexVertexIdProperty,
+    public Configuration(Boolean privateVertexHashEnabled, Boolean useNaturalIds,
+            Boolean useNaturalIdsOnlyIfSuppliedIdsAreIgnored,
 			Boolean doNotVersionEmptyTransactions) {
 		this.privateVertexHashEnabled = privateVertexHashEnabled;
-		this.autoIndexVertexIdProperty = autoIndexVertexIdProperty;
+        this.useNaturalIds = useNaturalIds;
+        this.useNaturalIdsOnlyIfSuppliedIdsAreIgnored = useNaturalIdsOnlyIfSuppliedIdsAreIgnored;
 		this.doNotVersionEmptyTransactions = doNotVersionEmptyTransactions;
 	}
 
@@ -59,33 +70,45 @@ public class Configuration {
 	 */
 	public Configuration() {
 		privateVertexHashEnabled = true;
-		autoIndexVertexIdProperty = false;
+        useNaturalIds = false;
+        useNaturalIdsOnlyIfSuppliedIdsAreIgnored = true;
 		doNotVersionEmptyTransactions = true;
 	}
 
 	/**
 	 * Private vertex hash calculation.
-	 * 
+	 *
 	 * The hash is calculated only for the vertex properties without taking its edges into account.
-	 * 
+	 *
 	 * @return true if private hash should be calculated for vertices
 	 */
 	public Boolean getPrivateVertexHashEnabled() {
 		return privateVertexHashEnabled;
 	}
 
-	/**
-	 * Auto index for vertex identifier property key.
-	 * 
-	 * @return True if auto index for vertices property key should be enabled
-	 */
-	public Boolean getAutoIndexVertexIdProperty() {
-		return autoIndexVertexIdProperty;
+    /**
+     * Whether or not graph maintains natural IDs
+     *
+     * @return true if graph maintains natural IDs
+     */
+    public Boolean getUseNaturalIds() {
+        return useNaturalIds;
 	}
+
+    /**
+     * Whether or nto graph maintains natural IDs in case underline graph
+     * ignores supplied IDs.
+     *
+     * @return true if graph maintains natural IDs in case underline graph
+     *         ignores supplied IDs.
+     */
+    public Boolean getUseNaturalIdsOnlyIfSuppliedIdsAreIgnored() {
+        return useNaturalIdsOnlyIfSuppliedIdsAreIgnored;
+    }
 
 	/**
 	 * Skip versioning of empty transactions.
-	 * 
+	 *
 	 * @return true if empty transactions should not be versioned.
 	 */
 	public Boolean getDoNotVersionEmptyTransactions() {

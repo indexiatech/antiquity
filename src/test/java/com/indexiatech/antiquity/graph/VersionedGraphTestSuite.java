@@ -372,31 +372,6 @@ public class VersionedGraphTestSuite<V extends Comparable<V>> extends TestSuite 
 		assertEquals(v1BeforeQux, graph.getPrivateHash(v1));
 	}
 
-	public void testVerticesIndex() {
-		VersionedGraph<TinkerGraph, V> graph =
-				(VersionedGraph<TinkerGraph, V>) ((VersionedGraphTest) graphTest).generateGraph("graph",
-						new Configuration(true, true, true));
-		assertNotNull(graph.getVertexIdentifiersIndex());
-		List<Vertex> v =
-				Lists.newArrayList(graph.getVertexIdentifiersIndex().get(VersionedGraph.VERTEX_ID_PROP_KEY, "foo"));
-		assertEquals(0, v.size());
-		Vertex fooV = graph.addVertex("foo");
-		// In transactional graph impl VERTEX_ID_PROP_KEY is not auto set
-		if (graph instanceof TransactionalGraph)
-			fooV.setProperty(VersionedGraph.VERTEX_ID_PROP_KEY, "foo");
-		commitIfTransactional(graph);
-		v = Lists.newArrayList(graph.getVertexIdentifiersIndex().get(VersionedGraph.VERTEX_ID_PROP_KEY, "foo"));
-		assertEquals(1, v.size());
-		fooV.setProperty(VersionedGraph.VERTEX_ID_PROP_KEY, "foo");
-		commitIfTransactional(graph);
-		v = Lists.newArrayList(graph.getVertexIdentifiersIndex().get(VersionedGraph.VERTEX_ID_PROP_KEY, "foo"));
-		assertEquals(1, v.size());
-		graph.removeVertex(fooV);
-		commitIfTransactional(graph);
-		v = Lists.newArrayList(graph.getVertexIdentifiersIndex().get(VersionedGraph.VERTEX_ID_PROP_KEY, "foo"));
-		assertEquals(0, v.size());
-	}
-
     public void testIndicesCreationAndDeletion() {
         String VERTEX_IDX_TEST = "TEST_V_IDX";
         VersionedGraph<TinkerGraph, V> graph = getGraphInstance();
