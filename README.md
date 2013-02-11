@@ -1,5 +1,6 @@
 Antiquity
 =========
+[![Build Status](https://travis-ci.org/asaf/antiquity.png?branch=master)](https://travis-ci.org/asaf/antiquity)
 
 ![diagram](http://dl.dropbox.com/u/21514850/antiquity/Antiquity-vertices-in-1-diagram.png)
 
