@@ -7,25 +7,16 @@ import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.event.EventElement;
-import com.tinkerpop.blueprints.util.wrappers.event.EventTrigger;
-import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListener;
-
-import java.util.List;
 
 /**
  * An @{link Index} that decorates versioned graph elements.
  */
 public class VersionedIndex<T extends Element, V extends Comparable<V>> implements Index<T> {
     protected final Index<T> rawIndex;
-    protected final List<GraphChangedListener> graphChangedListeners;
-    private final EventTrigger trigger;
     private final VersionedGraph<?, V> graph;
 
-    public VersionedIndex(final Index<T> rawIndex, final List<GraphChangedListener> graphChangedListeners,
-            final EventTrigger trigger, final VersionedGraph<?, V> graph) {
+    public VersionedIndex(final Index<T> rawIndex, final VersionedGraph<?, V> graph) {
         this.rawIndex = rawIndex;
-        this.graphChangedListeners = graphChangedListeners;
-        this.trigger = trigger;
         this.graph = graph;
     }
 
@@ -42,11 +33,10 @@ public class VersionedIndex<T extends Element, V extends Comparable<V>> implemen
     @Override
     public CloseableIterable<T> get(final String key, final Object value) {
         if (Vertex.class.isAssignableFrom(this.getIndexClass())) {
-            return new VersionedVertexIterable(this.rawIndex.get(key, value), this.graphChangedListeners, this.trigger,
-                    graph, graph.getLatestGraphVersion());
+            return new VersionedVertexIterable(this.rawIndex.get(key, value), graph, graph.getLatestGraphVersion());
         } else {
             return (CloseableIterable<T>) new VersionedEdgeIterable<V>((Iterable<Edge>) this.rawIndex.get(key, value),
-                    this.graphChangedListeners, trigger, graph, graph.getLatestGraphVersion(), false);
+                    graph, graph.getLatestGraphVersion(), false);
         }
     }
 

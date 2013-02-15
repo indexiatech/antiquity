@@ -2,11 +2,8 @@ package co.indexia.antiquity.graph;
 
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Index;
-import com.tinkerpop.blueprints.util.wrappers.event.EventTrigger;
-import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListener;
 
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * A sequence of indices that applies the list of listeners into each element.
@@ -14,16 +11,11 @@ import java.util.List;
 class VersionedIndexIterable<T extends Element, V extends Comparable<V>> implements Iterable<Index<T>> {
 
     private final Iterable<Index<T>> iterable;
-    private final List<GraphChangedListener> graphChangedListeners;
-    private final EventTrigger trigger;
     private final VersionedGraph<?, V> graph;
     private final V version;
 
-    public VersionedIndexIterable(final Iterable<Index<T>> iterable, List<GraphChangedListener> graphChangedListeners,
-            final EventTrigger trigger, final VersionedGraph<?, V> graph, V version) {
+    public VersionedIndexIterable(final Iterable<Index<T>> iterable, final VersionedGraph<?, V> graph, V version) {
         this.iterable = iterable;
-        this.graphChangedListeners = graphChangedListeners;
-        this.trigger = trigger;
         this.graph = graph;
         this.version = version;
     }
@@ -40,7 +32,7 @@ class VersionedIndexIterable<T extends Element, V extends Comparable<V>> impleme
 
             @Override
             public Index<T> next() {
-                return new VersionedIndex<T, V>(this.itty.next(), graphChangedListeners, trigger, graph);
+                return new VersionedIndex<T, V>(this.itty.next(), graph);
             }
 
             @Override
