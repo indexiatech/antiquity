@@ -230,8 +230,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
             vertex = baseGraph.addVertex(id);
         }
 
-        VersionedVertex vv =
-                new VersionedVertex<V>(vertex, this.graphChangedListeners, this.trigger, this, getLatestGraphVersion());
+        VersionedVertex vv = new VersionedVertex<V>(vertex, this, getLatestGraphVersion());
         vv.setTrans(true);
         this.onVertexAdded(vv);
 
@@ -347,7 +346,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
             if (isHistoricalOrInternal(vertex)) {
                 return vertex;
             } else {
-                return new VersionedVertex<V>(vertex, this.graphChangedListeners, this.trigger, this, version);
+                return new VersionedVertex<V>(vertex, this, version);
             }
         } else {
             return null;
@@ -362,8 +361,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
      *         version.
      */
     public Iterable<Vertex> getVertices(V version) {
-        return new VersionedVertexIterable<V>(this.baseGraph.getVertices(), this.graphChangedListeners, this.trigger,
-                this, version);
+        return new VersionedVertexIterable<V>(this.baseGraph.getVertices(), this, version);
     }
 
     /**
@@ -379,8 +377,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
     public Iterable<Vertex> getVertices(final String key, final Object value, V version) {
         // TODO: Consider forbidding retrieving edges by internal keys
         // (especially NATURAL_ID_PROP_KEY), otherwise throw exception.
-        return new VersionedVertexIterable<V>(this.baseGraph.getVertices(key, value), this.graphChangedListeners,
-                this.trigger, this, version);
+        return new VersionedVertexIterable<V>(this.baseGraph.getVertices(key, value), this, version);
     }
 
     /**
@@ -391,8 +388,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
      * @return An {@link Iterable} of the found edges for the specified version.
      */
     public Iterable<Edge> getEdges(V version) {
-        return new VersionedEdgeIterable<V>(this.baseGraph.getEdges(), this.graphChangedListeners, this.trigger, this,
-                version, false);
+        return new VersionedEdgeIterable<V>(this.baseGraph.getEdges(), this, version, false);
     }
 
     /**
@@ -407,8 +403,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
     public Iterable<Edge> getEdges(final String key, final Object value, V version) {
         // TODO: Consider forbidding retrieving edges by internal keys
         // (especially NATURAL_ID_PROP_KEY), otherwise throw exception.
-        return new VersionedEdgeIterable<V>(this.baseGraph.getEdges(key, value), this.graphChangedListeners,
-                this.trigger, this, version, false);
+        return new VersionedEdgeIterable<V>(this.baseGraph.getEdges(key, value), this, version, false);
     }
 
     // Get/Set Version Methods
@@ -706,8 +701,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
     @Override
     public <T extends Element> Index<T> createIndex(final String indexName, final Class<T> indexClass,
             final Parameter... indexParameters) {
-        return new VersionedIndex<T, V>(this.getBaseGraph().createIndex(indexName, indexClass, indexParameters),
-                this.graphChangedListeners, this.trigger, this);
+        return new VersionedIndex<T, V>(this.getBaseGraph().createIndex(indexName, indexClass, indexParameters), this);
     }
 
     @Override
@@ -716,14 +710,13 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
         if (null == index) {
             return null;
         } else {
-            return new VersionedIndex<T, V>(index, this.graphChangedListeners, this.trigger, this);
+            return new VersionedIndex<T, V>(index, this);
         }
     }
 
     @Override
     public Iterable<Index<? extends Element>> getIndices() {
-        return new VersionedIndexIterable(this.baseGraph.getIndices(), this.graphChangedListeners, this.trigger, this,
-                getLatestGraphVersion());
+        return new VersionedIndexIterable(this.baseGraph.getIndices(), this, getLatestGraphVersion());
     }
 
     @Override
