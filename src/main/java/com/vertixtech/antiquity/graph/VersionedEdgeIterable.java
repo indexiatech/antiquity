@@ -21,11 +21,8 @@ package com.vertixtech.antiquity.graph;
 import com.google.common.collect.Iterables;
 import com.tinkerpop.blueprints.CloseableIterable;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.util.wrappers.event.EventTrigger;
-import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListener;
 
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * A sequence of edges that is filtered by validity according to the specified
@@ -34,17 +31,13 @@ import java.util.List;
 class VersionedEdgeIterable<V extends Comparable<V>> implements CloseableIterable<Edge> {
 
     private final Iterable<Edge> iterable;
-    private final List<GraphChangedListener> graphChangedListeners;
-    private final EventTrigger trigger;
     private final VersionedGraph<?, V> graph;
     private final V version;
     private final boolean withInternalEdges;
 
-    public VersionedEdgeIterable(final Iterable<Edge> iterable, final List<GraphChangedListener> graphChangedListeners,
-            final EventTrigger trigger, VersionedGraph<?, V> graph, V version, boolean withInternalEdges) {
+    public VersionedEdgeIterable(final Iterable<Edge> iterable, VersionedGraph<?, V> graph, V version,
+            boolean withInternalEdges) {
         this.iterable = iterable;
-        this.graphChangedListeners = graphChangedListeners;
-        this.trigger = trigger;
         this.graph = graph;
         this.version = version;
         this.withInternalEdges = withInternalEdges;
@@ -68,7 +61,7 @@ class VersionedEdgeIterable<V extends Comparable<V>> implements CloseableIterabl
                 if (graph.isHistoricalOrInternal(edge) || (!graph.isVersionedEdge(edge))) {
                     return edge;
                 } else {
-                    return new VersionedEdge<V>(edge, graphChangedListeners, trigger, graph, version);
+                    return new VersionedEdge<V>(edge, graph, version);
                 }
             }
 

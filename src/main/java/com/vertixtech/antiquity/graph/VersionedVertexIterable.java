@@ -21,11 +21,8 @@ package com.vertixtech.antiquity.graph;
 import com.google.common.collect.Iterables;
 import com.tinkerpop.blueprints.CloseableIterable;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.util.wrappers.event.EventTrigger;
-import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListener;
 
 import java.util.Iterator;
-import java.util.List;
 
 /**
  *
@@ -33,8 +30,6 @@ import java.util.List;
 public class VersionedVertexIterable<V extends Comparable<V>> implements CloseableIterable<Vertex> {
 
     private final Iterable<Vertex> iterable;
-    private final List<GraphChangedListener> graphChangedListeners;
-    private final EventTrigger trigger;
     private final VersionedGraph<?, V> graph;
     private final V version;
 
@@ -47,12 +42,8 @@ public class VersionedVertexIterable<V extends Comparable<V>> implements Closeab
      * @param graph
      * @param version
      */
-    public VersionedVertexIterable(final Iterable<Vertex> iterable,
-            final List<GraphChangedListener> graphChangedListeners, final EventTrigger trigger,
-            final VersionedGraph<?, V> graph, V version) {
+    public VersionedVertexIterable(final Iterable<Vertex> iterable, final VersionedGraph<?, V> graph, V version) {
         this.iterable = iterable;
-        this.graphChangedListeners = graphChangedListeners;
-        this.trigger = trigger;
         this.graph = graph;
         this.version = version;
     }
@@ -82,7 +73,7 @@ public class VersionedVertexIterable<V extends Comparable<V>> implements Closeab
                 if (graph.isHistoricalOrInternal(v) || (!graph.isVersionedVertex(v))) {
                     return v;
                 } else {
-                    return new VersionedVertex<V>(v, graphChangedListeners, trigger, graph, version);
+                    return new VersionedVertex<V>(v, graph, version);
                 }
             }
 

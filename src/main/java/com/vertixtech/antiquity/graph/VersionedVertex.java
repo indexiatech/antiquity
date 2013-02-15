@@ -21,11 +21,8 @@ package com.vertixtech.antiquity.graph;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.util.wrappers.event.EventTrigger;
 import com.tinkerpop.blueprints.util.wrappers.event.EventVertex;
-import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListener;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -52,9 +49,8 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
      */
     private boolean trans;
 
-    protected VersionedVertex(Vertex rawVertex, List<GraphChangedListener> graphChangedListeners, EventTrigger trigger,
-            VersionedGraph<?, V> graph, V version) {
-        super(rawVertex, graphChangedListeners, trigger);
+    protected VersionedVertex(Vertex rawVertex, VersionedGraph<?, V> graph, V version) {
+        super(rawVertex, graph);
         this.graph = graph;
         this.forVersion = version;
     }
@@ -67,15 +63,15 @@ public class VersionedVertex<V extends Comparable<V>> extends EventVertex {
     public Iterable<Edge> getEdges(final Direction direction, boolean internalEdges, final String... labels) {
         operationNotSupportedForTransient(this);
 
-        return new VersionedEdgeIterable<V>(((Vertex) this.baseElement).getEdges(direction, labels),
-                this.graphChangedListeners, trigger, graph, forVersion, internalEdges);
+        return new VersionedEdgeIterable<V>(((Vertex) this.baseElement).getEdges(direction, labels), graph, forVersion,
+                internalEdges);
     }
 
     @Override
     public Iterable<Vertex> getVertices(final Direction direction, final String... labels) {
         operationNotSupportedForTransient(this);
-        return new VersionedVertexIterable<V>(((Vertex) this.baseElement).getVertices(direction, labels),
-                this.graphChangedListeners, trigger, graph, forVersion);
+        return new VersionedVertexIterable<V>(((Vertex) this.baseElement).getVertices(direction, labels), graph,
+                forVersion);
     }
 
     /**
