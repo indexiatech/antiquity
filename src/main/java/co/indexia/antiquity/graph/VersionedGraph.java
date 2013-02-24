@@ -18,6 +18,16 @@
  */
 package co.indexia.antiquity.graph;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.tinkerpop.blueprints.Direction;
@@ -40,16 +50,6 @@ import com.tinkerpop.blueprints.util.wrappers.id.IdGraph.IdFactory;
 import co.indexia.antiquity.graph.identifierBehavior.GraphIdentifierBehavior;
 import co.indexia.antiquity.range.Range;
 import co.indexia.antiquity.utils.ExceptionFactory;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 
 /**
  * Versioned graph implementation,
@@ -346,7 +346,11 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
             if (isHistoricalOrInternal(vertex)) {
                 return vertex;
             } else {
-                return new VersionedVertex<V>(vertex, this, version);
+                try {
+                    return new VersionedVertex<V>(getVertexForVersion(vertex, version), this, version);
+                } catch (NotFoundException e) {
+                    return null;
+                }
             }
         } else {
             return null;
