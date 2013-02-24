@@ -1,22 +1,35 @@
 /**
  * Copyright (c) 2012-2013 "Vertix Technologies, ltd."
- *
+ * 
  * This file is part of Antiquity.
- *
+ * 
  * Antiquity is free software: you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License as published by the Free
  * Software Foundation, either version 3 of the License, or (at your option) any
  * later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
  * details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package com.vertixtech.antiquity.graph;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertThat;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.UUID;
+
+import junit.framework.Assert;
+
+import org.neo4j.test.ImpermanentGraphDatabase;
 
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.TestSuite;
@@ -25,18 +38,6 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.neo4j.Neo4jGraph;
 import com.vertixtech.antiquity.graph.identifierBehavior.LongGraphIdentifierBehavior;
 import com.vertixtech.antiquity.range.Range;
-
-import junit.framework.Assert;
-
-import org.neo4j.test.ImpermanentGraphDatabase;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertThat;
-
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.UUID;
 
 public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
     public TransactionalVersionedGraph<Neo4jGraph, Long> graph;
@@ -99,7 +100,6 @@ public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
         Vertex v2 = graph.addVertex("v2");
         Vertex v3 = graph.addVertex("v3");
         graph.removeVertex(initial);
-        System.out.println(ElementUtils.getElementPropsAsString(((VersionedVertex<Long>) v1).getBaseVertex(), true));
         ((TransactionalGraph) graph).commit();
         Long ver2 = graph.getLatestGraphVersion();
 
@@ -107,6 +107,7 @@ public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
         assertEquals(Range.range(ver2, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(v2));
         assertEquals(Range.range(ver2, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(v3));
         assertEquals(Range.range(ver1, ver1), graph.getVersionRange(initial));
+        assertThat(graph.getVertex(initial.getId()), nullValue());
     }
 
     public void testCreateVerticesAndSetPropertiesShouldHaveTheSameVersion() {
@@ -167,9 +168,9 @@ public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
 
     /**
      * Empty transactions should not be versioned.
-     *
+     * 
      * This is the expected default graph configuration behavior
-     *
+     * 
      * @see Configuration#doNotVersionEmptyTransactions
      */
     public void testEmptyTransactionShouldNotBeVersioned() {
