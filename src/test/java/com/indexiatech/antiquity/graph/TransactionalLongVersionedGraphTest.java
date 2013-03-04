@@ -18,19 +18,6 @@
  */
 package co.indexia.antiquity.graph;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertThat;
-
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.UUID;
-
-import junit.framework.Assert;
-
-import org.neo4j.test.ImpermanentGraphDatabase;
-
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.TestSuite;
 import com.tinkerpop.blueprints.TransactionalGraph;
@@ -38,6 +25,16 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.neo4j.Neo4jGraph;
 import co.indexia.antiquity.graph.identifierBehavior.LongGraphIdentifierBehavior;
 import co.indexia.antiquity.range.Range;
+import junit.framework.Assert;
+import org.neo4j.test.ImpermanentGraphDatabase;
+import org.neo4j.test.TestGraphDatabaseFactory;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.UUID;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.assertThat;
 
 public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
     public TransactionalVersionedGraph<Neo4jGraph, Long> graph;
@@ -49,13 +46,13 @@ public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
 
     @Override
     public Graph generateGraph(final String graphDirectoryName) {
-        Neo4jGraph baseGraph = new Neo4jGraph(new ImpermanentGraphDatabase());
+        Neo4jGraph baseGraph = new Neo4jGraph(new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder().newGraphDatabase());
         return new TransactionalVersionedGraph<Neo4jGraph, Long>(baseGraph, new LongGraphIdentifierBehavior());
     }
 
     @Override
     public Graph generateGraph(final String graphDirectoryName, Configuration conf) {
-        Neo4jGraph baseGraph = new Neo4jGraph(new ImpermanentGraphDatabase());
+        Neo4jGraph baseGraph = new Neo4jGraph(new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder().newGraphDatabase());
         return new TransactionalVersionedGraph<Neo4jGraph, Long>(baseGraph, new LongGraphIdentifierBehavior(), conf,
                 null, null);
     }
