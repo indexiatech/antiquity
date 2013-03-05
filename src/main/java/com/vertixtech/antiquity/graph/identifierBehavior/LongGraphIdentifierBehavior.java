@@ -47,8 +47,10 @@ public class LongGraphIdentifierBehavior extends BaseGraphIdentifierBehavior<Lon
 
     @Override
     public Long getNextGraphVersion(Long currentVersion) {
+        if (currentVersion == Long.MAX_VALUE)
+        	throw new IllegalStateException("Cannot get next version, long range has ended ");
+        
         long nextVersion = currentVersion + 1;
-
         return nextVersion;
     }
 }
