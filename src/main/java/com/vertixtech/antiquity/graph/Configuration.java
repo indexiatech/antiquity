@@ -51,29 +51,15 @@ public class Configuration {
     public final Boolean doNotVersionEmptyTransactions;
 
     /**
-     * Create an instance of this class with the specified configuration
-     * properties.
+     * Create an instance of this class with the specified builder.
      *
-     * @param privateVertexHashEnabled
-     * @param useNaturalIds
-     * @param doNotVersionEmptyTransactions
+     * @param builder The builder to build the configuration with.
      */
-    public Configuration(Boolean privateVertexHashEnabled, Boolean useNaturalIds,
-            Boolean useNaturalIdsOnlyIfSuppliedIdsAreIgnored, Boolean doNotVersionEmptyTransactions) {
-        this.privateVertexHashEnabled = privateVertexHashEnabled;
-        this.useNaturalIds = useNaturalIds;
-        this.useNaturalIdsOnlyIfSuppliedIdsAreIgnored = useNaturalIdsOnlyIfSuppliedIdsAreIgnored;
-        this.doNotVersionEmptyTransactions = doNotVersionEmptyTransactions;
-    }
-
-    /**
-     * Create an instance of this class with default configuration.
-     */
-    public Configuration() {
-        privateVertexHashEnabled = true;
-        useNaturalIds = false;
-        useNaturalIdsOnlyIfSuppliedIdsAreIgnored = true;
-        doNotVersionEmptyTransactions = true;
+    private Configuration(ConfBuilder builder) {
+        this.privateVertexHashEnabled = builder.privateVertexHashEnabled;
+        this.useNaturalIds = builder.useNaturalIds;
+        this.useNaturalIdsOnlyIfSuppliedIdsAreIgnored = builder.useNaturalIdsOnlyIfSuppliedIdsAreIgnored;
+        this.doNotVersionEmptyTransactions = builder.doNotVersionEmptyTransactions;
     }
 
     /**
@@ -115,5 +101,39 @@ public class Configuration {
      */
     public Boolean getDoNotVersionEmptyTransactions() {
         return doNotVersionEmptyTransactions;
+    }
+
+    /**
+     * Configuration Builder.
+     */
+    public static class ConfBuilder {
+        private Boolean privateVertexHashEnabled = true;
+        private Boolean useNaturalIds = false;
+        private Boolean useNaturalIdsOnlyIfSuppliedIdsAreIgnored = true;
+        private Boolean doNotVersionEmptyTransactions = true;
+
+        public ConfBuilder privateVertexHashEnabled(Boolean privateVertexHashEnabled) {
+            this.privateVertexHashEnabled = privateVertexHashEnabled;
+            return this;
+        }
+
+        public ConfBuilder useNaturalIds(Boolean useNaturalIds) {
+            this.useNaturalIds = useNaturalIds;
+            return this;
+        }
+
+        public ConfBuilder useNaturalIdsOnlyIfSuppliedIdsAreIgnored(Boolean useNaturalIdsOnlyIfSuppliedIdsAreIgnored) {
+            this.useNaturalIdsOnlyIfSuppliedIdsAreIgnored = useNaturalIdsOnlyIfSuppliedIdsAreIgnored;
+            return this;
+        }
+
+        public ConfBuilder doNotVersionEmptyTransactions(Boolean doNotVersionEmptyTransactions) {
+            this.doNotVersionEmptyTransactions = doNotVersionEmptyTransactions;
+            return this;
+        }
+
+        public Configuration build() {
+            return new Configuration(this);
+        }
     }
 }

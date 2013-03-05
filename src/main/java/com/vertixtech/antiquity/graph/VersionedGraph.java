@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import ch.qos.logback.core.joran.spi.ConfigurationWatchList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -181,7 +182,7 @@ public abstract class VersionedGraph<T extends IndexableGraph, V extends Compara
         this.identifierBehavior = identifierBehavior;
         identifierBehavior.setGraph(this);
         if (conf == null) {
-            this.conf = new Configuration();
+            this.conf = new Configuration.ConfBuilder().build();
         } else {
             this.conf = conf;
         }
