@@ -21,7 +21,9 @@ package co.indexia.antiquity.graph;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Features;
 import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.util.wrappers.WrappedGraphQuery;
 import com.tinkerpop.blueprints.util.wrappers.WrapperGraph;
 
 /**
@@ -157,6 +159,21 @@ public class VersionContextGraph<V extends Comparable<V>> implements Graph, Wrap
     @Override
     public Iterable<Edge> getEdges(String key, Object value) {
         return graph.getEdges(key, value);
+    }
+
+    @Override
+    public GraphQuery query() {
+        return new WrappedGraphQuery(this.graph.query()) {
+            @Override
+            public Iterable<Edge> edges() {
+                return new VersionedEdgeIterable<V>(this.query.edges(), graph, version, false);
+            }
+
+            @Override
+            public Iterable<Vertex> vertices() {
+                return new VersionedVertexIterable<V>(this.query.vertices(), graph, version);
+            }
+        };
     }
 
     @Override
