@@ -16,21 +16,18 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package co.indexia.antiquity.utils;
+package co.indexia.antiquity.graph;
 
-import co.indexia.antiquity.graph.NotFoundException;
+import java.util.UUID;
+
+import com.tinkerpop.blueprints.util.wrappers.id.IdGraph;
 
 /**
- * A centralized location to instantiate application exceptions.
+ * Default (UUID based) ID factory for Vertices and Edges.
  */
-public class ExceptionFactory {
-    /**
-     * An exception that should be thrown when a property could not be found.
-     *
-     * @param msg The message of the exception
-     * @return An exception instance
-     */
-    public static NotFoundException notFoundException(String msg) {
-        return new NotFoundException(msg);
+class DefaultIdFactory implements IdGraph.IdFactory {
+    @Override
+    public Object createId() {
+        return UUID.randomUUID().toString();
     }
 }
