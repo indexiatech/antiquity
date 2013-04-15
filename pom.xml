@@ -25,7 +25,7 @@
 
 	<groupId>com.vertixtech</groupId>
 	<artifactId>antiquity</artifactId>
-	<version>0.1-SNAPSHOT</version>
+	<version>0.3</version>
 	
 	<name>Antiquity</name>
 	<description>Antiquity - A versioned graph implementation for known graph databases</description>
