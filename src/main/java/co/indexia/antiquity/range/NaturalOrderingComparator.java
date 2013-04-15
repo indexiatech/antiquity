@@ -24,9 +24,9 @@ import java.util.Comparator;
  * A natural ordering comparator.
  *
  * Used when no {@link Comparator} is specified when instantiating a
- * {@link RangeTest} object.
+ * {@link Range} object.
  *
- * @see RangeTest
+ * @see Range
  */
 @SuppressWarnings("rawtypes")
 public enum NaturalOrderingComparator implements Comparator {
