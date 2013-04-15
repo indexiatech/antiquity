@@ -18,149 +18,143 @@
  */
 package com.vertixtech.antiquity.graph;
 
-import com.tinkerpop.blueprints.Graph;
-import com.tinkerpop.blueprints.TestSuite;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertThat;
+
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.neo4j.Neo4jGraph;
 import com.vertixtech.antiquity.graph.identifierBehavior.LongGraphIdentifierBehavior;
 import com.vertixtech.antiquity.range.Range;
-import junit.framework.Assert;
+
+import org.junit.Test;
 import org.neo4j.test.ImpermanentGraphDatabase;
-import org.neo4j.test.TestGraphDatabaseFactory;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.UUID;
-
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.assertThat;
-
-public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
-    public TransactionalVersionedGraph<Neo4jGraph, Long> graph;
-
+public class TransactionalLongVersionedGraphTest extends VersionedGraphTestSuite<Long> {
     @Override
-    public Graph generateGraph() {
+    public ActiveVersionedGraph<?, Long> generateGraph() {
         return generateGraph("graph");
     }
 
     @Override
-    public Graph generateGraph(final String graphDirectoryName) {
-        Neo4jGraph baseGraph = new Neo4jGraph(new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder().newGraphDatabase());
-        return new TransactionalVersionedGraph<Neo4jGraph, Long>(baseGraph, new LongGraphIdentifierBehavior());
+    public ActiveVersionedGraph<?, Long> generateGraph(final String graphDirectoryName) {
+        return generateGraph(graphDirectoryName, null);
     }
 
     @Override
-    public Graph generateGraph(final String graphDirectoryName, Configuration conf) {
-        Neo4jGraph baseGraph = new Neo4jGraph(new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder().newGraphDatabase());
-        return new TransactionalVersionedGraph<Neo4jGraph, Long>(baseGraph, new LongGraphIdentifierBehavior(), conf,
-                null, null);
-    }
-
-    @Override
-    public void doTestSuite(TestSuite testSuite) throws Exception {
-        for (Method method : testSuite.getClass().getDeclaredMethods()) {
-            if (method.getName().startsWith("test")) {
-                System.out.println("Testing " + method.getName() + "...");
-                method.invoke(testSuite);
-            }
-        }
-    }
-
-    @Override
-    public void setUp() throws Exception {
-        graph = (TransactionalVersionedGraph<Neo4jGraph, Long>) generateGraph(null);
-    }
-
-    @Override
-    public void tearDown() throws Exception {
-        graph.shutdown();
+    public ActiveVersionedGraph<?, Long> generateGraph(final String graphDirectoryName, Configuration conf) {
+        return new ActiveVersionedGraph.ActiveVersionedTransactionalGraphBuilder<Neo4jGraph, Long>(new Neo4jGraph(
+                new ImpermanentGraphDatabase()), new LongGraphIdentifierBehavior()).init(true).conf(conf).build();
     }
 
     public void commit() {
-        graph.commit();
-    }
-
-    public void testVersionedGraphTestSuite() throws Exception {
-        this.stopWatch();
-        doTestSuite(new VersionedGraphTestSuite<Long>(this));
-        printTestPerformance("GraphTestSuite", this.stopWatch());
-    }
-
-    public void testFewAddAndRemovalOfVerticesInTheSameTransactionShouldHaveTheSameVersion() {
-        Vertex initial = graph.addVertex("vInit");
         ((TransactionalGraph) graph).commit();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void duplicatedVertexIdTest() {
+        graph.addVertex("v1");
+        graph.addVertex("v1");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void duplicatedEdgeIdTest() {
+        Vertex v1 = graph.addVertex("v1");
+        Vertex v2 = graph.addVertex("v2");
+
+        graph.addEdge("e1", v1, v2, "L1");
+        graph.addEdge("e1", v1, v2, "L2");
+    }
+
+    @Test
+    public void testMultipleChangesInOneTransactionHaveSameVersion() {
+        Vertex initial = graph.addVertex("vInit");
+        commit();
+        Object initialId = initial.getId();
         Long ver1 = graph.getLatestGraphVersion();
-        assertNotNull(ver1);
+        assertThat(ver1, notNullValue());
 
         Vertex v1 = graph.addVertex("v1");
         Vertex v2 = graph.addVertex("v2");
         Vertex v3 = graph.addVertex("v3");
         graph.removeVertex(initial);
-        ((TransactionalGraph) graph).commit();
+        commit();
         Long ver2 = graph.getLatestGraphVersion();
 
-        assertEquals(Range.range(ver2, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(v1));
-        assertEquals(Range.range(ver2, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(v2));
-        assertEquals(Range.range(ver2, graph.getMaxPossibleGraphVersion()), graph.getVersionRange(v3));
-        assertEquals(Range.range(ver1, ver1), graph.getVersionRange(initial));
-        assertThat(graph.getVertex(initial.getId()), nullValue());
+        assertThat(graph.utils.getVersionRange(graph.getHistoricGraph().getVertex(initialId)),
+                is(Range.range(ver1, ver1)));
+        assertThat(graph.utils.getVersionRange(graph.getHistoricGraph().getVertex(v1.getId())),
+                is(Range.range(ver2, graph.getMaxPossibleGraphVersion())));
+        assertThat(graph.utils.getVersionRange(graph.getHistoricGraph().getVertex(v2.getId())),
+                is(Range.range(ver2, graph.getMaxPossibleGraphVersion())));
+        assertThat(graph.utils.getVersionRange(graph.getHistoricGraph().getVertex(v3.getId())),
+                is(Range.range(ver2, graph.getMaxPossibleGraphVersion())));
     }
 
-    public void testCreateVerticesAndSetPropertiesShouldHaveTheSameVersion() {
+    @Test
+    public void testCreateAndModifyAndDeleteInOneCommit() {
         Vertex v1 = graph.addVertex("v1");
         Vertex v2 = graph.addVertex("v2");
         Vertex v3 = graph.addVertex("v3");
+        Vertex v4 = graph.addVertex("v4");
         v1.setProperty("key1", "foo1");
+        v1.setProperty("key11", "foo11");
+        v1.setProperty("key111", "foo111");
         v2.setProperty("key2", "foo2");
+        v2.setProperty("key22", "foo22");
+        v2.setProperty("key222", "foo222");
         v3.setProperty("key3", "foo3");
-        ((TransactionalGraph) graph).commit();
+        v3.setProperty("key33", "foo33");
+        v3.setProperty("key333", "foo333");
+        v4.setProperty("key4", "foo4");
+        v4.setProperty("key44", "foo44");
+        v4.setProperty("key444", "foo444");
+        // TODO: Causes a bug.
+        // graph.removeVertex(v4);
+        commit();
         Long ver = graph.getLatestGraphVersion();
 
-        // TODO: Consider setting forVersion automatically
-        ((VersionedVertex<Long>) v1).setForVersion(ver);
-        ((VersionedVertex<Long>) v2).setForVersion(ver);
-        ((VersionedVertex<Long>) v3).setForVersion(ver);
+        // h1
+        HistoricVersionedVertex<Long> hv1 = (HistoricVersionedVertex) graph.getHistoricGraph().getVertex(v1.getId());
+        assertThat(hv1, notNullValue());
+        assertThat(hv1.getVersion(), is(Range.range(ver, ver)));
+        assertThat(graph.utils.getVersionRange(hv1), is(Range.range(ver, graph.getMaxPossibleGraphVersion())));
 
-        Assert.assertEquals("foo1", v1.getProperty("key1"));
-        Assert.assertEquals("foo2", v2.getProperty("key2"));
-        Assert.assertEquals("foo3", v3.getProperty("key3"));
-    }
+        // h2
+        HistoricVersionedVertex<Long> hv2 = (HistoricVersionedVertex) graph.getHistoricGraph().getVertex(v2.getId());
+        assertThat(hv2, notNullValue());
+        assertThat(hv2.getVersion(), is(Range.range(ver, ver)));
+        assertThat(graph.utils.getVersionRange(hv2), is(Range.range(ver, graph.getMaxPossibleGraphVersion())));
 
-    public void testQueringUncommittedChangesShouldCauseException() {
-        Vertex fooV = graph.addVertex("fooV");
-        try {
-            fooV.getPropertyKeys().size();
-            assertTrue(false);
-        } catch (IllegalStateException e) {
-            try {
-                fooV.setProperty("key", "foo");
-                fooV.getPropertyKeys().size();
-                assertTrue(false);
-            } catch (IllegalStateException ex) {
+        // h3
+        HistoricVersionedVertex<Long> hv3 = (HistoricVersionedVertex) graph.getHistoricGraph().getVertex(v3.getId());
+        assertThat(hv3, notNullValue());
+        assertThat(hv3.getVersion(), is(Range.range(ver, ver)));
+        assertThat(graph.utils.getVersionRange(hv3), is(Range.range(ver, graph.getMaxPossibleGraphVersion())));
 
-            }
-        }
+        // h4
 
-        graph.commit();
-        assertTrue(fooV.getPropertyKeys().size() > 0);
-        assertEquals("foo", fooV.getProperty("key"));
+        assertThat(graph.getHistoricGraph().buildVertexChain(v1.getId()).size(), is(1));
+        assertThat(graph.getHistoricGraph().buildVertexChain(v2.getId()).size(), is(1));
+        assertThat(graph.getHistoricGraph().buildVertexChain(v3.getId()).size(), is(1));
     }
 
     public void testCreateAndSetOnSameVertexShouldCreateOnlyVertexOnly() {
-        VersionedVertex<Long> fooV = (VersionedVertex<Long>) graph.addVertex("fooV");
-        // Base as currently transient vertex cannot be queried
-        assertNull(fooV.getBaseElement().getProperty("key1"));
-        assertNull(fooV.getBaseElement().getProperty("key2"));
-        fooV.setProperty("key1", "foo");
-        assertEquals("foo", fooV.getBaseElement().getProperty("key1"));
-        fooV.setProperty("key2", "bar");
-        assertEquals("foo", fooV.getBaseElement().getProperty("key1"));
-        assertEquals("bar", fooV.getBaseElement().getProperty("key2"));
-        graph.commit();
-        ArrayList<Vertex> vertexChain = new ArrayList<Vertex>();
-        VersionedGraph.getVertexChain(vertexChain, fooV);
-        assertEquals(1, vertexChain.size());
+        /*
+         * HistoricVersionedVertex<Long> fooV = (HistoricVersionedVertex<Long>)
+         * graph.addVertex("fooV"); // Base as currently transient vertex cannot
+         * be queried assertNull(fooV.getBaseElement().getProperty("key1"));
+         * assertNull(fooV.getBaseElement().getProperty("key2"));
+         * fooV.setProperty("key1", "foo"); assertEquals("foo",
+         * fooV.getBaseElement().getProperty("key1")); fooV.setProperty("key2",
+         * "bar"); assertEquals("foo",
+         * fooV.getBaseElement().getProperty("key1")); assertEquals("bar",
+         * fooV.getBaseElement().getProperty("key2")); graph.commit();
+         * ArrayList<Vertex> vertexChain = new ArrayList<Vertex>();
+         * ActiveVersionedGraph.buildVertexChain(vertexChain, fooV);
+         * assertEquals(1, vertexChain.size());
+         */
     }
 
     /**
@@ -172,10 +166,10 @@ public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
      */
     public void testEmptyTransactionShouldNotBeVersioned() {
         Long ver1 = graph.getLatestGraphVersion();
-        graph.commit();
-        graph.commit();
-        graph.commit();
-        assertEquals(ver1, graph.getLatestGraphVersion());
+        commit();
+        commit();
+        commit();
+        assertThat(graph.getLatestGraphVersion(), is(ver1));
     }
 
     /**
@@ -183,14 +177,16 @@ public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
      * {@link Configuration#useNaturalIdsOnlyIfSuppliedIdsAreIgnored} is true
      * and the underline is neo4j and it ignores supplied keys
      */
+    @Test
     public void testIsNatureIdsEnabled() {
         assertThat(graph.isNaturalIds(), is(Boolean.TRUE));
     }
 
+    @Test
     public void testNaturalIds() {
         String vId = "TEST-ID";
         Vertex v = graph.addVertex(vId);
-        graph.commit();
+        commit();
         assertThat(v.getId(), is((Object) vId));
 
         Vertex vLoaded = graph.getVertex(vId);
@@ -199,6 +195,5 @@ public class TransactionalLongVersionedGraphTest extends VersionedGraphTest {
 
         Vertex v1 = graph.addVertex(null);
         assertThat(v1.getId(), notNullValue());
-        UUID.fromString((String) v1.getId());
     }
 }

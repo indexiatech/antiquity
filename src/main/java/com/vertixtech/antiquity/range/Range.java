@@ -184,7 +184,7 @@ public class Range<T> {
      * @return the created range object
      * @throws IllegalArgumentException if either of the specified values is
      *         null
-     * @return ClassCastException if the specified value type doesn't implements
+     * @throws ClassCastException if the specified value type doesn't implements
      *         {@code Comparable}
      */
     public static <T extends Comparable<T>> Range<T> range(T from, T to) {
@@ -214,7 +214,7 @@ public class Range<T> {
      * @param comparator the comparator to be used, null for natural ordering
      * @return the created range object, not null
      * @throws IllegalArgumentException if either value is null
-     * @return ClassCastException if the specified value type does not
+     * @throws ClassCastException if the specified value type does not
      *         implements {@code Comparable}
      */
     public static <T> Range<T> range(T from, T to, Comparator<T> comparator) {
