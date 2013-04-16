@@ -18,6 +18,7 @@
  */
 package co.indexia.antiquity.graph;
 
+import com.google.common.base.Preconditions;
 import com.tinkerpop.blueprints.CloseableIterable;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
@@ -25,61 +26,79 @@ import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.event.EventElement;
+import com.tinkerpop.blueprints.util.wrappers.event.EventIndex;
 
 /**
- * An @{link Index} that decorates versioned graph elements.
+ * An @{link Index} that decorates active versioned elements.
  */
-public class VersionedIndex<T extends Element, V extends Comparable<V>> implements Index<T> {
-    protected final Index<T> rawIndex;
+public class ActiveVersionedIndex<T extends Element, V extends Comparable<V>> implements Index<T> {
+    protected final EventIndex<T> eventIndex;
     private final ActiveVersionedGraph<?, V> graph;
 
-    public VersionedIndex(final Index<T> rawIndex, final ActiveVersionedGraph<?, V> graph) {
-        this.rawIndex = rawIndex;
+    public ActiveVersionedIndex(final Index<T> rawIndex, final ActiveVersionedGraph<?, V> graph) {
+        this.eventIndex = (EventIndex)rawIndex;
         this.graph = graph;
     }
 
     @Override
     public void remove(final String key, final Object value, final T element) {
-        this.rawIndex.remove(key, value, (T) ((EventElement) element).getBaseElement());
+        this.eventIndex.remove(key, value, (T) getEventElement(element));
     }
 
     @Override
     public void put(final String key, final Object value, final T element) {
-        this.rawIndex.put(key, value, (T) ((EventElement) element).getBaseElement());
+        this.eventIndex.put(key, value, (T) getEventElement(element));
     }
 
     @Override
     public CloseableIterable<T> get(final String key, final Object value) {
         if (Vertex.class.isAssignableFrom(this.getIndexClass())) {
-            return new ActiveVersionedVertexIterable((Iterable) this.rawIndex.get(key, value), graph);
+            return new ActiveVersionedVertexIterable((Iterable) this.eventIndex.get(key, value), graph);
         } else {
-            return (CloseableIterable<T>) new ActiveVersionedEdgeIterable<V>((Iterable<Edge>) this.rawIndex.get(key,
+            return (CloseableIterable<T>) new ActiveVersionedEdgeIterable<V>((Iterable<Edge>) this.eventIndex.get(key,
                     value), graph);
         }
     }
 
     @Override
     public CloseableIterable<T> query(final String key, final Object query) {
-        throw new IllegalArgumentException("Query currently not supported.");
+        if (Vertex.class.isAssignableFrom(this.getIndexClass())) {
+            return (CloseableIterable<T>) new ActiveVersionedVertexIterable(this.eventIndex.query(key, query), graph);
+        } else {
+            return (CloseableIterable<T>) new ActiveVersionedEdgeIterable(this.eventIndex.query(key, query), graph);
+        }
     }
 
     @Override
     public long count(final String key, final Object value) {
-        return this.rawIndex.count(key, value);
+        return this.eventIndex.count(key, value);
     }
 
     @Override
     public String getIndexName() {
-        return this.rawIndex.getIndexName();
+        return this.eventIndex.getIndexName();
     }
 
     @Override
     public Class<T> getIndexClass() {
-        return this.rawIndex.getIndexClass();
+        return this.eventIndex.getIndexClass();
     }
 
     @Override
     public String toString() {
         return StringFactory.indexString(this);
+    }
+
+    private EventElement getEventElement(Element ae) {
+        Preconditions.checkArgument(ae instanceof ActiveVersionedElement, "Element must be active.");
+
+        EventElement eventElement = null;
+        if (ae instanceof ActiveVersionedVertex) {
+            eventElement = ((ActiveVersionedVertex) ae).getEventableVertex();
+        } else {
+            eventElement = ((ActiveVersionedEdge) ae).getEventableEdge();
+        }
+
+        return eventElement;
     }
 }

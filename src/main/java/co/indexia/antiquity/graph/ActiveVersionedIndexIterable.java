@@ -26,12 +26,12 @@ import com.tinkerpop.blueprints.Index;
 /**
  * A sequence of indices that applies the list of listeners into each element.
  */
-class VersionedIndexIterable<T extends Element, V extends Comparable<V>> implements Iterable<Index<T>> {
+class ActiveVersionedIndexIterable<T extends Element, V extends Comparable<V>> implements Iterable<Index<T>> {
 
     private final Iterable<Index<T>> iterable;
     private final ActiveVersionedGraph<?, V> graph;
 
-    public VersionedIndexIterable(final Iterable<Index<T>> iterable, final ActiveVersionedGraph<?, V> graph) {
+    public ActiveVersionedIndexIterable(final Iterable<Index<T>> iterable, final ActiveVersionedGraph<?, V> graph) {
         this.iterable = iterable;
         this.graph = graph;
     }
@@ -48,7 +48,7 @@ class VersionedIndexIterable<T extends Element, V extends Comparable<V>> impleme
 
             @Override
             public Index<T> next() {
-                return new VersionedIndex<T, V>(this.itty.next(), graph);
+                return new ActiveVersionedIndex<T, V>(this.itty.next(), graph);
             }
 
             @Override
