@@ -383,7 +383,8 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
     @Override
     public <T extends Element> Index<T> createIndex(final String indexName, final Class<T> indexClass,
             final Parameter... indexParameters) {
-        return new VersionedIndex<T, V>(this.getBaseGraph().createIndex(indexName, indexClass, indexParameters), this);
+        return new ActiveVersionedIndex<T, V>(getEventableGraph().createIndex(indexName, indexClass, indexParameters),
+                this);
     }
 
     @Override
@@ -392,13 +393,13 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
         if (null == index) {
             return null;
         } else {
-            return new VersionedIndex<T, V>(index, this);
+            return new ActiveVersionedIndex<T, V>(index, this);
         }
     }
 
     @Override
     public Iterable<Index<? extends Element>> getIndices() {
-        return new VersionedIndexIterable(getEventableGraph().getIndices(), this);
+        return new ActiveVersionedIndexIterable(getEventableGraph().getIndices(), this);
     }
 
     @Override

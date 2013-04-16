@@ -37,6 +37,8 @@ import com.google.common.collect.Lists;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Index;
+import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
@@ -496,8 +498,9 @@ public abstract class VersionedGraphTestSuite<V extends Comparable<V>> {
         Object e2Id = e2.getId();
         graph.removeEdge(e2);
         Iterable<Edge> es = graph.getBaseGraph().query().has(VEProps.HISTORIC_ELEMENT_PROP_KEY, true).edges();
-        //TODO: Cause exception in neo4j since removed elements are still read by get methods
-        //assertThat(graph.getEdges(), hasAmount(amountV + 1));
+        // TODO: Cause exception in neo4j since removed elements are still read
+        // by get methods
+        // assertThat(graph.getEdges(), hasAmount(amountV + 1));
         // assertThat(graph.getEdge(e2Id), nullValue());
         CIT();
         V e2RemoveVer = last();
@@ -1178,55 +1181,68 @@ public abstract class VersionedGraphTestSuite<V extends Comparable<V>> {
 
 
     // ----Indices tests
+    @Test
     public void testIndicesCreationAndDeletion() {
-        /*
-         * String VERTEX_IDX_TEST = "TEST_V_IDX";
-         * ActiveVersionedGraph<TinkerGraph, V> graph = createGraphInstance();
-         * try { graph.createIndex(VERTEX_IDX_TEST, Vertex.class, new
-         * Parameter[0]);
-         * 
-         * Index<Vertex> loadedIdx = graph.getIndex(VERTEX_IDX_TEST,
-         * Vertex.class); assertThat(loadedIdx, notNullValue());
-         * 
-         * graph.dropIndex(VERTEX_IDX_TEST);
-         * assertThat(graph.getIndex(VERTEX_IDX_TEST, Vertex.class),
-         * nullValue()); } finally { graph.shutdown(); }
-         */
-    }
+        ActiveVersionedVertex v1 = (ActiveVersionedVertex)graph.addVertex("v1");
+        CIT();
+        Object v1Ver = last();
+        int i = 1;
+        for (i = i; i < 4; i++) {
+            graph.addVertex("noop" + i);
+            CIT();
+        }
+        ActiveVersionedVertex v2 = (ActiveVersionedVertex)graph.addVertex("v2");
+        CIT();
+        Object v2Ver = last();
+        for (i = i; i < 8; i++) {
+            graph.addVertex("noop" + i);
+            CIT();
+        }
+        ActiveVersionedVertex v3 = (ActiveVersionedVertex)graph.addVertex("v3");
+        CIT();
+        Object v3Ver = last();
+        for (i = i; i < 12; i++) {
+            graph.addVertex("noop" + i);
+            CIT();
+        }
+        ActiveVersionedEdge e1 = (ActiveVersionedEdge)graph.addEdge(null, v1, v2, "L");
+        CIT();
 
-    public void testInsertAndDeleteEntriesFromIndex() {
-        /*
-         * ActiveVersionedGraph<TinkerGraph, V> graph = createGraphInstance();
-         * Index<Vertex> testIdx = graph.createIndex("TEST_V_IDX", Vertex.class,
-         * new Parameter[0]);
-         * 
-         * Vertex fooV = graph.addVertex(1); commitIfTransactional(graph); V
-         * fooEmptyVersion = last(); commitIfTransactional(graph);
-         * fooV.setProperty("key", "foo"); commitIfTransactional(graph);
-         * testIdx.put("key", "foo", fooV); V fooWithKeyVersion = last();
-         * 
-         * CloseableIterable<Vertex> loadedVertices = testIdx.get("key", "foo");
-         * Iterator<Vertex> it = loadedVertices.iterator();
-         * assertThat(it.hasNext(), is(Boolean.TRUE)); Vertex loadedFooV =
-         * it.next(); assertThat(loadedFooV.getId(), is(loadedFooV.getId()));
-         * assertThat(fooV.getClass().getName(),
-         * is(loadedFooV.getClass().getName())); // Make sure that retrieved
-         * vertex from index are versionable loadedFooV.setProperty("key2",
-         * "foo2"); commitIfTransactional(graph); V fooWithKey2Version = last();
-         * 
-         * assertThat(graph.getVertexForVersion(fooV,
-         * fooEmptyVersion).getProperty("key"), nullValue());
-         * assertThat((String) graph.getVertexForVersion(fooV,
-         * fooWithKeyVersion).getProperty("key"), is("foo"));
-         * assertThat((String) graph.getVertexForVersion(fooV,
-         * fooWithKey2Version).getProperty("key"), is("foo"));
-         * assertThat((String) graph.getVertexForVersion(fooV,
-         * fooWithKey2Version).getProperty("key2"), is("foo2"));
-         * 
-         * // delete entry from index testIdx.remove("key", "foo", fooV);
-         * loadedVertices = testIdx.get("key", "foo");
-         * assertThat(loadedVertices.iterator().hasNext(), is(Boolean.FALSE));
-         */
+        // vertices
+        String VERTEX_IDX_TEST = "TEST_V_IDX";
+        graph.createIndex(VERTEX_IDX_TEST, Vertex.class, new Parameter[0]);
+        Index<Vertex> loadedVIdx = graph.getIndex(VERTEX_IDX_TEST, Vertex.class);
+        assertThat(loadedVIdx, notNullValue());
+        assertThat(loadedVIdx, instanceOf(ActiveVersionedIndex.class));
+        loadedVIdx.put("v1", "v1", v1);
+        loadedVIdx.put("v2", "v2", v2);
+        Iterable<Vertex> idxV1Iter = loadedVIdx.get("v1", "v1");
+        //TODO: Fix, iterator cannot be read twice
+        //assertThat(idxV1Iter, hasAmount(1));
+        ActiveVersionedVertex v1L = (ActiveVersionedVertex)idxV1Iter.iterator().next();
+        assertThat(v1L.getId(), is(v1L.getId()));
+
+        Iterable<Vertex> idxV2Iter = loadedVIdx.get("v2", "v2");
+        assertThat(idxV2Iter, hasAmount(1));
+        Iterable<Vertex> idxNoneIter = loadedVIdx.get("none", "none");
+        assertThat(idxNoneIter, hasAmount(0));
+
+        // edges
+        String EDGE_IDX_TEST = "TEST_E_IDX";
+        graph.createIndex(EDGE_IDX_TEST, Edge.class, new Parameter[0]);
+        Index<Edge> loadedEIdx = graph.getIndex(EDGE_IDX_TEST, Edge.class);
+        assertThat(loadedEIdx, notNullValue());
+        assertThat(loadedEIdx, instanceOf(ActiveVersionedIndex.class));
+        loadedEIdx.put("e1", "e1", e1);
+        Iterable<Edge> idxE1Iter = loadedEIdx.get("e1", "e1");
+        assertThat(idxE1Iter, hasAmount(1));
+        Iterable<Edge> idxENoneIter = loadedEIdx.get("none", "none");
+        assertThat(idxENoneIter, hasAmount(0));
+
+        graph.dropIndex(VERTEX_IDX_TEST);
+        assertThat(graph.getIndex(VERTEX_IDX_TEST, Vertex.class), nullValue());
+        graph.dropIndex(EDGE_IDX_TEST);
+        assertThat(graph.getIndex(EDGE_IDX_TEST, Vertex.class), nullValue());
     }
 
     // Utils
