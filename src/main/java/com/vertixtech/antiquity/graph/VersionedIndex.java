@@ -1,3 +1,21 @@
+/**
+ * Copyright (c) 2012-2013 "Vertix Technologies, ltd."
+ * 
+ * This file is part of Antiquity.
+ * 
+ * Antiquity is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 package com.vertixtech.antiquity.graph;
 
 import com.tinkerpop.blueprints.CloseableIterable;
@@ -13,9 +31,9 @@ import com.tinkerpop.blueprints.util.wrappers.event.EventElement;
  */
 public class VersionedIndex<T extends Element, V extends Comparable<V>> implements Index<T> {
     protected final Index<T> rawIndex;
-    private final VersionedGraph<?, V> graph;
+    private final ActiveVersionedGraph<?, V> graph;
 
-    public VersionedIndex(final Index<T> rawIndex, final VersionedGraph<?, V> graph) {
+    public VersionedIndex(final Index<T> rawIndex, final ActiveVersionedGraph<?, V> graph) {
         this.rawIndex = rawIndex;
         this.graph = graph;
     }
@@ -33,10 +51,10 @@ public class VersionedIndex<T extends Element, V extends Comparable<V>> implemen
     @Override
     public CloseableIterable<T> get(final String key, final Object value) {
         if (Vertex.class.isAssignableFrom(this.getIndexClass())) {
-            return new VersionedVertexIterable(this.rawIndex.get(key, value), graph, graph.getLatestGraphVersion());
+            return new ActiveVersionedVertexIterable((Iterable) this.rawIndex.get(key, value), graph);
         } else {
-            return (CloseableIterable<T>) new VersionedEdgeIterable<V>((Iterable<Edge>) this.rawIndex.get(key, value),
-                    graph, graph.getLatestGraphVersion(), false);
+            return (CloseableIterable<T>) new ActiveVersionedEdgeIterable<V>((Iterable<Edge>) this.rawIndex.get(key,
+                    value), graph);
         }
     }
 
@@ -64,5 +82,4 @@ public class VersionedIndex<T extends Element, V extends Comparable<V>> implemen
     public String toString() {
         return StringFactory.indexString(this);
     }
-
 }

@@ -1,47 +1,48 @@
 /**
  * Copyright (c) 2012-2013 "Vertix Technologies, ltd."
- *
+ * 
  * This file is part of Antiquity.
- *
+ * 
  * Antiquity is free software: you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License as published by the Free
  * Software Foundation, either version 3 of the License, or (at your option) any
  * later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
  * details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package com.vertixtech.antiquity.graph;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.IndexableGraph;
+import com.tinkerpop.blueprints.KeyIndexableGraph;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.util.wrappers.event.EventTrigger;
 import com.tinkerpop.blueprints.util.wrappers.id.IdGraph.IdFactory;
 import com.vertixtech.antiquity.graph.identifierBehavior.GraphIdentifierBehavior;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
- * A transactional implementation of {@link VersionedGraph}.
- *
+ * A transactional implementation of {@link ActiveVersionedGraph}.
+ * 
  * @see TransactionalGraph
- * @see VersionedGraph
+ * @see ActiveVersionedGraph
  * @param <T> The type of the base graph, must support transactions.
  * @param <V> The version identifier type
  */
-public class TransactionalVersionedGraph<T extends TransactionalGraph & IndexableGraph, V extends Comparable<V>>
-        extends VersionedGraph<T, V> implements TransactionalGraph {
+public class TransactionalVersionedGraph<T extends TransactionalGraph & IndexableGraph & KeyIndexableGraph, V extends Comparable<V>>
+        extends ActiveVersionedGraph<T, V> implements TransactionalGraph {
     Logger log = LoggerFactory.getLogger(TransactionalVersionedGraph.class);
 
     private final ThreadLocal<TransactionData> transactionData = new ThreadLocal<TransactionData>() {
@@ -51,14 +52,13 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
         }
     };
 
-    public TransactionalVersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
-        super(baseGraph, identifierBehavior, null, null, null);
+    TransactionalVersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
+        super(baseGraph, identifierBehavior, null, null, null, true);
     }
 
-    public TransactionalVersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior,
+    TransactionalVersionedGraph(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior,
             Configuration configuration, IdFactory vertexIdFactory, IdFactory edgeIdFactory) {
-        super(baseGraph, identifierBehavior, configuration, vertexIdFactory, edgeIdFactory);
-        this.trigger = new EventTrigger(this, true);
+        super(baseGraph, identifierBehavior, configuration, vertexIdFactory, edgeIdFactory, true);
     }
 
     @Override
@@ -84,9 +84,9 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
     }
 
     @Override
-    public void vertexRemoved(Vertex vertex) {
+    public void vertexRemoved(Vertex vertex, Map<String, Object> props) {
         log.debug("==Vertex [{}] removed==", vertex);
-        transactionData.get().getRemovedVertices().add(vertex);
+        transactionData.get().getRemovedVertices().put(vertex, props);
     }
 
     @Override
@@ -97,22 +97,29 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
 
     @Override
     public void edgePropertyChanged(Edge edge, String key, Object oldValue, Object setValue) {
-        // Currently modified edges values are not versioned
+        log.debug("==Edge [{}] property[{}] was modified [{} -> {}]==", edge, key, oldValue, setValue);
+
+        putEntryOnMap(transactionData.get().getModifiedPropsPerEdge(), transactionData.get().getModifiedPropsPerEdge()
+                .get(edge), edge, key, oldValue);
     }
 
     @Override
     public void edgePropertyRemoved(Edge edge, String key, Object removedValue) {
-        // Currently modified edges values are not versioned
+        log.debug("==Edge property [{}] was removed [{}->{}]==", edge, removedValue);
+
+        putEntryOnMap(transactionData.get().getModifiedPropsPerEdge(), transactionData.get().getModifiedPropsPerEdge()
+                .get(edge), edge, key, removedValue);
     }
 
     @Override
-    public void edgeRemoved(Edge edge) {
-        transactionData.get().getRemovedEdges().add(edge);
+    public void edgeRemoved(Edge edge, Map<String, Object> props) {
+        log.debug("==Edge [{}] removed==", edge);
+        transactionData.get().getRemovedEdges().put(edge, props);
     }
 
     /**
      * Handles the {@link TransactionData} associated with this graph.
-     *
+     * 
      * @see TransactionData
      * @param nextVersion The next version of the transaction to be committed.
      */
@@ -128,8 +135,25 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
             // if vertex is new then skip version the modification as it'll
             // create an extra unneeded historical version
             if (!transactionData.get().getAddedVertices().contains(oldPropsPerVertex.getKey())) {
-                versionModifiedVertex(getLatestGraphVersion(), nextVersion,
-                        (VersionedVertex) oldPropsPerVertex.getKey(), oldPropsPerVertex.getValue());
+                versionModifiedVertex(getLatestGraphVersion(), nextVersion, oldPropsPerVertex.getKey(),
+                        oldPropsPerVertex.getValue());
+            } else {
+                log.trace(String.format("Modifications found for vertex [%s] but it's new, skipping modifications.",
+                        oldPropsPerVertex.getKey()));
+            }
+        }
+
+        for (Map.Entry<Edge, Map<String, Object>> oldPropsPerEdge : transactionData.get().getModifiedPropsPerEdge()
+                .entrySet()) {
+
+            // if edge is new then skip version the modification as it'll
+            // create an extra unneeded historical version
+            if (!transactionData.get().getAddedEdges().contains(oldPropsPerEdge.getKey())) {
+                versionModifiedEdge(getLatestGraphVersion(), nextVersion, oldPropsPerEdge.getKey(),
+                        oldPropsPerEdge.getValue());
+            } else {
+                log.trace(String.format("Modifications found for edge [%s] but it's new, skipping modifications.",
+                        oldPropsPerEdge.getKey()));
             }
         }
     }
@@ -151,12 +175,12 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
 
         V transactionVer = null;
         try {
-            trigger.fireEventQueue();
+            getEventableGraph().getTrigger().fireEventQueue();
 
             // Empty transaction
             if (conf.getDoNotVersionEmptyTransactions() && transactionData.get().isEmpty()) {
                 log.warn("An empty transaction was committed, skipping transaction commit");
-                this.baseGraph.commit();
+                getBaseGraph().commit();
                 return;
             }
 
@@ -164,14 +188,14 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
             if (transactionVer == null) {
                 transactionFailure = true;
                 log.error("Could not allocate next commit version, performing a rollback.");
-                this.baseGraph.rollback();
+                getBaseGraph().rollback();
             }
 
             log.debug("Committing transaction[{}]", transactionVer);
             handleTransactionData(transactionVer);
-            trigger.resetEventQueue();
+            getEventableGraph().getTrigger().resetEventQueue();
             transactionData.get().clear();
-            this.baseGraph.commit();
+            getBaseGraph().commit();
         } catch (RuntimeException re) {
             transactionFailure = true;
             log.error("Failed to commit transaction[{}]", transactionVer);
@@ -184,7 +208,7 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
                 // graph.
                 if (transactionVer != null) {
                     allocateNextGraphVersion(transactionVer);
-                    this.baseGraph.commit();
+                    getBaseGraph().commit();
                 }
             }
             // TODO: Unlock the transaction version allocation
@@ -200,13 +224,13 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
     public void rollback() {
         boolean transactionFailure = false;
         try {
-            this.baseGraph.rollback();
+            getBaseGraph().rollback();
         } catch (RuntimeException re) {
             transactionFailure = true;
             throw re;
         } finally {
             if (!transactionFailure) {
-                trigger.resetEventQueue();
+                getEventableGraph().getTrigger().resetEventQueue();
                 transactionData.get().clear();
             }
         }
@@ -216,22 +240,22 @@ public class TransactionalVersionedGraph<T extends TransactionalGraph & Indexabl
      * <p>
      * Put the specified property key/value in the specified map.
      * </p>
-     *
+     * 
      * <p>
      * If map is null a new map will be created
      * </p>
-     *
+     * 
      * @param map A map of properties to hold the specified key/value property
      * @param key The key of the property to store within the specified map
      * @param value The value of the property to store within the specified map
      * @return The specified map after it contains the specified key/value
      */
-    private Map<String, Object> putEntryOnMap(Map<Vertex, Map<String, Object>> verticesMaps, Map<String, Object> map,
-            Vertex vertex, String key, Object value) {
+    private static <E extends Element> Map<String, Object> putEntryOnMap(Map<E, Map<String, Object>> elementMap,
+            Map<String, Object> map, E element, String key, Object value) {
 
         if (map == null) {
             map = new HashMap<String, Object>();
-            verticesMaps.put(vertex, map);
+            elementMap.put(element, map);
         }
 
         map.put(key, value);
