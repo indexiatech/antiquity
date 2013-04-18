@@ -210,7 +210,7 @@ public abstract class VersionedGraphBase<T extends KeyIndexableGraph & Indexable
      * @param key The property key to determine
      * @return true if property is for internal usage only
      */
-    private static boolean isAntiquityKey(String key) {
+    public static boolean isAntiquityKey(String key) {
         return VEProps.antiquityElementsKeys.contains(key);
     }
 
@@ -220,7 +220,7 @@ public abstract class VersionedGraphBase<T extends KeyIndexableGraph & Indexable
      * 
      * @return An immutable set containing the internal property keys
      */
-    private static Set<String> getAntiquityKeys() {
+    public static Set<String> getAntiquityKeys() {
         return VEProps.antiquityElementsKeys;
     }
 }
