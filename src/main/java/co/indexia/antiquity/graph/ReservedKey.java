@@ -56,6 +56,11 @@ public @interface ReservedKey {
     Class elementType();
 
     /**
+     * true if the property is automatically indexed.
+     */
+    boolean indexed() default false;
+
+    /**
      * Key element relevance: Can be ACTIVE / HISTORIC or INTERNAL elements
      * 
      * @return The relevance value
