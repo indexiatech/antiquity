@@ -61,6 +61,10 @@ public class VEProps {
      */
     public static final Set<String> internalPreservedEdgeLabels;
 
+    public static final Set<String> vertexIndexedKeys;
+
+    public static final Set<String> edgeIndexedKeys;
+
     // ----- Versioned Vertex internal properties
     /**
      * A marker property key which indicates that the
@@ -100,7 +104,7 @@ public class VEProps {
     /**
      * The key name of the natural identifier of an element.
      */
-    @ReservedKey(copiable = false, internal = false, elementType = Element.class, relevance = ReservedKey.RestrictionType.ACTIVE)
+    @ReservedKey(copiable = false, internal = false, indexed=true, elementType = Element.class, relevance = ReservedKey.RestrictionType.ACTIVE)
     public static final String NATURAL_ID_PROP_KEY = "__ID__";
 
     /**
@@ -174,6 +178,8 @@ public class VEProps {
         Set<String> allKeysSet = new HashSet<String>();
         Set<String> nonCopiableKeysSet = new HashSet<String>();
         Set<String> internalElementsKeysSet = new HashSet<String>();
+        Set<String> vertexIndexedKeysSet = new HashSet<String>();
+        Set<String> edgeIndexedKeysSet = new HashSet<String>();
 
         for (Field f : VEProps.class.getFields()) {
             ReservedKey rk = f.getAnnotation(ReservedKey.class);
@@ -188,6 +194,19 @@ public class VEProps {
                         if (rk.internal()) {
                             internalElementsKeysSet.add(key);
                         }
+                        if (rk.indexed()) {
+                            if (rk.elementType().equals(Vertex.class)) {
+                                vertexIndexedKeysSet.add(key);
+                            } else if (rk.elementType().equals(Vertex.class)) {
+                                edgeIndexedKeysSet.add(key);
+                            } else if (rk.elementType().equals(Element.class)) {
+                                vertexIndexedKeysSet.add(key);
+                                edgeIndexedKeysSet.add(key);
+                            } else {
+                                throw new IllegalStateException(String.format(
+                                        "Key %s is indexed but its type must be of type Vertex/Edge/Element", f.getName()));
+                            }
+                        }
                     } else {
                         throw new IllegalStateException(String.format("Found key field %s which is not a string type",
                                 f.getName()));
@@ -200,6 +219,8 @@ public class VEProps {
         antiquityElementsKeys = ImmutableSet.copyOf(allKeysSet);
         nonCopiableKeys = ImmutableSet.copyOf(nonCopiableKeysSet);
         internalPreservedElementKeys = ImmutableSet.copyOf(internalElementsKeysSet);
+        vertexIndexedKeys = ImmutableSet.copyOf(vertexIndexedKeysSet);
+        edgeIndexedKeys = ImmutableSet.copyOf(edgeIndexedKeysSet);
         internalPreservedEdgeLabels = ImmutableSet.of(PREV_VERSION_LABEL);
     }
 }
