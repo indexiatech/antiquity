@@ -74,9 +74,7 @@ public class HasElementIds<T extends Iterable<? extends Element>> extends TypeSa
         if (type == TYPE.CONTAINS) {
             return ids.containsAll(expected);
         } else if (type == TYPE.EXACTLY_MATCHES) {
-            List realIds = new ArrayList<Object>(ids);
-            realIds.removeAll(expected);
-            return realIds.size() == 0;
+            return (ids.containsAll(expected) && expected.containsAll(ids));
         }
 
         throw new IllegalStateException(("comparison type is unsupported."));
