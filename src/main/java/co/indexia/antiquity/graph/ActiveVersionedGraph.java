@@ -411,7 +411,7 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
             }
         }
 
-        ((KeyIndexableGraph) getEventableGraph()).dropKeyIndex(key, elementClass);
+        getEventableGraph().getBaseGraph().dropKeyIndex(key, elementClass);
     }
 
     @Override
@@ -422,13 +422,13 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
                     VEProps.NATURAL_ID_PROP_KEY));
         }
 
-        ((KeyIndexableGraph) getEventableGraph()).createKeyIndex(key, elementClass, indexParameters);
+        getEventableGraph().getBaseGraph().createKeyIndex(key, elementClass, indexParameters);
     }
 
     @Override
     public <T extends Element> Set<String> getIndexedKeys(final Class<T> elementClass) {
         final Set<String> keys = new HashSet<String>();
-        keys.addAll(((KeyIndexableGraph) getEventableGraph()).getIndexedKeys(elementClass));
+        keys.addAll( getEventableGraph().getBaseGraph().getIndexedKeys(elementClass));
         keys.remove(VEProps.NATURAL_ID_PROP_KEY);
         return keys;
     }
