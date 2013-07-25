@@ -24,7 +24,10 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.VertexQuery;
+import com.tinkerpop.blueprints.util.wrappers.WrapperVertexQuery;
+import com.tinkerpop.blueprints.util.wrappers.event.EventEdgeIterable;
 import com.tinkerpop.blueprints.util.wrappers.event.EventVertex;
+import com.tinkerpop.blueprints.util.wrappers.event.EventVertexIterable;
 
 /**
  * A {@link com.tinkerpop.blueprints.Vertex} that represents an active
@@ -70,7 +73,17 @@ public class ActiveVersionedVertex<V extends Comparable<V>> extends ActiveVersio
 
     @Override
     public VertexQuery query() {
-        throw new UnsupportedOperationException("Query is currently unsupported.");
+        return new WrapperVertexQuery(((Vertex) getRaw()).query()) {
+            @Override
+            public Iterable<Vertex> vertices() {
+                return new ActiveVersionedVertexIterable<V>(this.query.vertices(), getGraph());
+            }
+
+            @Override
+            public Iterable<Edge> edges() {
+                return new ActiveVersionedEdgeIterable<V>(this.query.edges(), getGraph());
+            }
+        };
     }
 
     @Override
@@ -133,7 +146,7 @@ public class ActiveVersionedVertex<V extends Comparable<V>> extends ActiveVersio
 
     /**
      * Get the private hash of the vertex or null if no private hash found.
-     *
+     * 
      * @see Configuration#privateVertexHashEnabled
      * @return the private hash of the vertex or null if no private hash found.
      */
