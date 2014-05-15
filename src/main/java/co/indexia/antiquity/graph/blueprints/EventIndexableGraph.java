@@ -35,7 +35,7 @@ public class EventIndexableGraph<T extends IndexableGraph> extends
      * 
      * @param baseIndexableGraph The base graph to wrap, this is usually the
      *        root level blueprint graph (e.g
-     *        {@link com.tinkerpop.blueprints.impls.neo4j.Neo4jGraph}
+     *        {@link com.tinkerpop.blueprints.impls.neo4j2.Neo4j2Graph}
      * @param queue true if events should be queued until
      *        {@link EventTrigger#fireEventQueue()} is invoked.
      */
