@@ -63,9 +63,9 @@
 		<jdk.version>1.6</jdk.version>
 		<sunfire.argLine>-Xmx1024m</sunfire.argLine>
 
-		<tinkerpop-blueprints-neo4j.version>2.4.0</tinkerpop-blueprints-neo4j.version>
+		<tinkerpop-blueprints-neo4j2.version>2.5.0</tinkerpop-blueprints-neo4j2.version>
 		<!-- Must correspond to the version set in tinkerpop blueprints neo4j version -->
-		<neo4j.version>1.9.2</neo4j.version>
+		<neo4j.version>2.0.1</neo4j.version>
 		<slf4j.version>1.7.2</slf4j.version>
 		<guava.version>14.0-rc1</guava.version>
 		<junit.version>4.11</junit.version>
@@ -97,13 +97,13 @@
 		<!-- blueprints, with neo4j implementation -->
 		<dependency>
 			<groupId>com.tinkerpop.blueprints</groupId>
-			<artifactId>blueprints-neo4j-graph</artifactId>
-			<version>${tinkerpop-blueprints-neo4j.version}</version>
+			<artifactId>blueprints-neo4j2-graph</artifactId>
+			<version>${tinkerpop-blueprints-neo4j2.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.tinkerpop.blueprints</groupId>
 			<artifactId>blueprints-test</artifactId>
-			<version>${tinkerpop-blueprints-neo4j.version}</version>
+			<version>${tinkerpop-blueprints-neo4j2.version}</version>
 		</dependency>
 
 		<dependency>

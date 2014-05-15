@@ -24,7 +24,7 @@ import static org.junit.Assert.assertThat;
 
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.neo4j.Neo4jGraph;
+import com.tinkerpop.blueprints.impls.neo4j2.Neo4j2Graph;
 import co.indexia.antiquity.graph.identifierBehavior.LongGraphIdentifierBehavior;
 import co.indexia.antiquity.range.Range;
 
@@ -44,7 +44,7 @@ public class TransactionalLongVersionedGraphTest extends VersionedGraphTestSuite
 
     @Override
     public ActiveVersionedGraph<?, Long> generateGraph(final String graphDirectoryName, Configuration conf) {
-        return new ActiveVersionedGraph.ActiveVersionedTransactionalGraphBuilder<Neo4jGraph, Long>(new Neo4jGraph(
+        return new ActiveVersionedGraph.ActiveVersionedTransactionalGraphBuilder<Neo4j2Graph, Long>(new Neo4j2Graph(
                 new ImpermanentGraphDatabase()), new LongGraphIdentifierBehavior()).init(true).conf(conf).build();
     }
 
