@@ -156,13 +156,15 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
      * once for the whole life of the graph database.
      */
     public void init() {
-        // TODO: Is verifiying that conf vertex exist is sufficient?
+        Vertex vertex = null;
         try {
-            getRootVertex();
-
-            throw new IllegalStateException("Versioned graph was already initialized.");
+            vertex = getRootVertex();
         } catch (IllegalStateException e) {
             log.info("Initializing graph...");
+        }
+
+        if (vertex != null) {
+            return;
         }
 
         Vertex historicRoot = utils.getNonEventableVertex(addActiveVertexInUnderline(null));
