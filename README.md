@@ -6,26 +6,23 @@ Antiquity
 
 Antiquity - A versioned graph.
 
-Antiquity is a versioned graph with full history support for graph elements.
-
-Antiquity is not tight to any specific graph database, this is achieved by using 
-Tinkerpop Blueprints project (http://blueprints.tinkerpop.com) which provides an abstraction layer for graph underlines 
-such as Neo4j, OrienDB, Titan, etc.
+Antiquity is a [Blueprints](http://blueprints.tinkerpop.com) extension that enhances any Blueprints graph with full versioning and history support,
+This can work with any underline graph DB that Blueprints supports such as _Neo4j, OrientDB, Titan, etc..._
 
 Creating a versioned graph
 ==========================
 
 Creating a versioned graph basically cosntructed from two main items:
 
-1. The underline blueprint graph implementation (for simplicity, in memory TinkerGraph graph is used below)
-1. The versioned graph that wraps the underline graph (for simplicty a non transactional versioned graph is used).
+1. The underline blueprint graph implementation.
+1. The versioned graph that wraps the underline graph.
 
 ```java
-//A blueprint graph
-TinkerGraph baseGraph = new TinkerGraph();
-//Create a non transactional versioned graph with long version identifier
-NonTransactionalVersionedGraph<TinkerGraph, Long> graph = new NonTransactionalVersionedGraph<TinkerGraph, Long>(
-  			baseGraph, new LongGraphIdentifierBehavior());
+TinkerGraph graph = new TinkerGraph();
+        Configuration conf = new Configuration.ConfBuilder().build();
+        ActiveVersionedGraph<TinkerGraph, Long> vg = new ActiveVersionedGraph.ActiveVersionedNonTransactionalGraphBuilder<TinkerGraph, Long>(
+                graph, new LongGraphIdentifierBehavior()).init(true).conf(conf).build();
+//Do something with vg (versioned graph) here (read blow)
 ```
 
 Writing/Reading the graph
@@ -34,20 +31,17 @@ Writing/Reading the graph
 Here is an example how to create a vertex with few updates where each update is stored as a version.
 
 ```java
-Vertex v = graph.addVertex("versioned_vertex");
-Long version1 = graph.getLatestGraphVersion();
+Vertex v = vg.addVertex("item1");
 v.setProperty("key", "foo");
-Long version2 = graph.getLatestGraphVersion();
+long verFoo = vg.getLatestGraphVersion();
 v.setProperty("key", "bar");
-Long version3 = graph.getLatestGraphVersion();
-//prints null
-System.out.println(graph.getVertexForVersion(v, version1).getProperty("key"));
-//prints foo
-System.out.println(graph.getVertexForVersion(v, version2).getProperty("key"));
-//prints bar
-System.out.println(graph.getVertexForVersion(v, version3).getProperty("key"));
-```
+long verBar = vg.getLatestGraphVersion();
+//Working with vg is just like working with the graph itself, it only contains the latest data.
+System.out.println(vg.getVertex("item1").getProperty("key")); //prints bar
 
-Working with the graph is simply done by the standard BluePrint's Graph interface.
-The method graph.getVertexForVersion(Vertex v, Long ver) loads a vertex state for a specific version allowing
-a full view of how the vertex (with its edges) looked like back then in a previous version.
+//You can query how a vertex looked like in previous states by using the historic graph API
+Vertex item1InVer1 = vg.getHistoricGraph().getVertexForVersion(v.getId(), verFoo);
+System.out.println(item1InVer1.getProperty("key")); //prints foo
+Vertex item1InVer2 = vg.getHistoricGraph().getVertexForVersion(v.getId(), verBar);
+System.out.println(item1InVer2.getProperty("key")); //prints bar
+```
