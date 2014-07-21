@@ -18,6 +18,7 @@
  */
 package co.indexia.antiquity.graph;
 
+import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -97,7 +98,7 @@ public class ElementUtils {
         Hasher h = hf.newHasher();
 
         //h.putString("[" + element.getId().toString() + "]");
-        h.putString(propsJoiner.join(props));
+        h.putString(propsJoiner.join(props), Charset.defaultCharset());
 
         return h.hash().toString();
     }
