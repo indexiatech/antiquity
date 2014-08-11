@@ -20,15 +20,16 @@ package co.indexia.antiquity.graph.blueprints;
 
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.IndexableGraph;
+import com.tinkerpop.blueprints.KeyIndexableGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.wrappers.event.EventTrigger;
 
 /**
  * Increased visibility of
- * {@link com.tinkerpop.blueprints.util.wrappers.event.EventIndexableGraph}
+ * {@link com.tinkerpop.blueprints.util.wrappers.event.EventGraph}
  */
-public class EventIndexableGraph<T extends IndexableGraph> extends
-        com.tinkerpop.blueprints.util.wrappers.event.EventIndexableGraph<T> {
+public class EventGraph<T extends KeyIndexableGraph> extends
+        com.tinkerpop.blueprints.util.wrappers.event.EventGraph<T> {
 
     /**
      * Create a graph wrapper with events support.
@@ -39,7 +40,7 @@ public class EventIndexableGraph<T extends IndexableGraph> extends
      * @param queue true if events should be queued until
      *        {@link EventTrigger#fireEventQueue()} is invoked.
      */
-    public EventIndexableGraph(T baseIndexableGraph, boolean queue) {
+    public EventGraph(T baseIndexableGraph, boolean queue) {
         super(baseIndexableGraph);
         this.trigger = new EventTrigger(this, queue);
     }

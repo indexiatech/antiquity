@@ -24,30 +24,11 @@ import static org.junit.Assert.assertThat;
 
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.neo4j2.Neo4j2Graph;
-import co.indexia.antiquity.graph.identifierBehavior.LongGraphIdentifierBehavior;
 import co.indexia.antiquity.range.Range;
 
 import org.junit.Test;
-import org.neo4j.test.ImpermanentGraphDatabase;
 
-public class TransactionalLongVersionedGraphTest extends VersionedGraphTestSuite<Long> {
-    @Override
-    public ActiveVersionedGraph<?, Long> generateGraph() {
-        return generateGraph("graph");
-    }
-
-    @Override
-    public ActiveVersionedGraph<?, Long> generateGraph(final String graphDirectoryName) {
-        return generateGraph(graphDirectoryName, null);
-    }
-
-    @Override
-    public ActiveVersionedGraph<?, Long> generateGraph(final String graphDirectoryName, Configuration conf) {
-        return new ActiveVersionedGraph.ActiveVersionedTransactionalGraphBuilder<Neo4j2Graph, Long>(new Neo4j2Graph(
-                new ImpermanentGraphDatabase()), new LongGraphIdentifierBehavior()).init(true).conf(conf).build();
-    }
-
+public abstract class TransactionalLongVersionedGraphTest extends VersionedGraphTestSuite<Long> {
     public void commit() {
         ((TransactionalGraph) graph).commit();
     }

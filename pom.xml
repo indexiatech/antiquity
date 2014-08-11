@@ -66,6 +66,7 @@
 		<tinkerpop-blueprints-neo4j2.version>2.5.0</tinkerpop-blueprints-neo4j2.version>
 		<!-- Must correspond to the version set in tinkerpop blueprints neo4j version -->
 		<neo4j.version>2.0.1</neo4j.version>
+        <titan.version>0.4.4</titan.version>
 		<slf4j.version>1.7.2</slf4j.version>
 		<guava.version>16.0.1</guava.version>
 		<junit.version>4.11</junit.version>
@@ -124,6 +125,17 @@
 			<artifactId>slf4j-ext</artifactId>
 			<version>${slf4j.version}</version>
 		</dependency>
+
+        <dependency>
+            <groupId>com.thinkaurelius.titan</groupId>
+            <artifactId>titan-core</artifactId>
+            <version>${titan.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.thinkaurelius.titan</groupId>
+            <artifactId>titan-berkeleyje</artifactId>
+            <version>${titan.version}</version>
+        </dependency>
 	</dependencies>
 
 	<build>

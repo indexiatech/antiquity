@@ -32,12 +32,10 @@ public class NonTransactionalLongTypeVersionedGraphTest extends VersionedGraphTe
         return generateGraph("graph");
     }
 
-    @Override
     protected ActiveVersionedGraph<?, Long> generateGraph(String graphDirectoryName) {
         return generateGraph(graphDirectoryName, null);
     }
 
-    @Override
     protected ActiveVersionedGraph<?, Long> generateGraph(String graphDirectoryName, Configuration conf) {
         // For natural IDs tests
         // Configuration conf1 = new

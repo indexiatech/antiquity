@@ -20,6 +20,7 @@ package co.indexia.antiquity.graph;
 
 import com.google.common.base.Preconditions;
 import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Vertex;
 import co.indexia.antiquity.range.Range;
 
 /**
@@ -78,7 +79,11 @@ public abstract class HistoricVersionedElement<V extends Comparable<V>, T extend
      */
     public Object getHardId() {
         if (graph.isNaturalIds()) {
-            return rawElement.getProperty(VEProps.NATURAL_ID_PROP_KEY);
+            if (rawElement instanceof Vertex) {
+                return rawElement.getProperty(VEProps.NATURAL_VERTEX_ID_PROP_KEY);
+            } else {
+                return rawElement.getProperty(VEProps.NATURAL_EDGE_ID_PROP_KEY);
+            }
         } else {
             return rawElement.getId();
         }

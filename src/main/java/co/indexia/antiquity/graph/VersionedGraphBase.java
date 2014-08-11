@@ -33,7 +33,7 @@ import co.indexia.antiquity.graph.identifierBehavior.GraphIdentifierBehavior;
  * Base class for {@link ActiveVersionedGraph} and
  * {@link HistoricVersionedGraph}.
  */
-public abstract class VersionedGraphBase<T extends KeyIndexableGraph & IndexableGraph, V extends Comparable<V>>
+public abstract class VersionedGraphBase<T extends KeyIndexableGraph, V extends Comparable<V>>
         implements KeyIndexableGraph, WrapperGraph<T> {
     /**
      * Supported graph features
