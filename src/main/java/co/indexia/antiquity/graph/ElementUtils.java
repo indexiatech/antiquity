@@ -156,7 +156,7 @@ public class ElementUtils {
     @SuppressWarnings("unchecked")
     public static <E extends Element> E getSingleElement(Graph graph, String key, Object value, Class<E> clazz) {
         Iterable<?> it =
-                Vertex.class.isAssignableFrom(clazz) ? graph.getVertices(key, value) : graph.getEdges(key, value);
+                Vertex.class.isAssignableFrom(clazz) ? graph.query().has(key, value).vertices() : graph.query().has(key, value).edges();
         Iterator<?> iter = it.iterator();
 
         E e = null;

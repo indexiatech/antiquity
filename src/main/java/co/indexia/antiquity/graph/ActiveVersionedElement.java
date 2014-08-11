@@ -20,6 +20,7 @@ package co.indexia.antiquity.graph;
 
 import com.google.common.base.Preconditions;
 import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.wrappers.event.EventElement;
 import com.tinkerpop.blueprints.util.wrappers.readonly.ReadOnlyEdge;
@@ -67,7 +68,11 @@ public abstract class ActiveVersionedElement<V extends Comparable<V>, T extends 
     @Override
     public Object getId() {
         if (graph.isNaturalIds()) {
-            return rawElement.getProperty(VEProps.NATURAL_ID_PROP_KEY);
+            if (rawElement instanceof Vertex) {
+                return rawElement.getProperty(VEProps.NATURAL_VERTEX_ID_PROP_KEY);
+            } else {
+                return rawElement.getProperty(VEProps.NATURAL_EDGE_ID_PROP_KEY);
+            }
         } else {
             return rawElement.getId();
         }

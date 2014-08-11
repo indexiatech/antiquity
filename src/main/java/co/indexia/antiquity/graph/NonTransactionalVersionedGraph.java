@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * @param <T> The type of the graph
  * @param <V> The type of the graph version
  */
-public class NonTransactionalVersionedGraph<T extends IndexableGraph & KeyIndexableGraph, V extends Comparable<V>>
+public class NonTransactionalVersionedGraph<T extends KeyIndexableGraph, V extends Comparable<V>>
         extends ActiveVersionedGraph<T, V> {
     Logger log = LoggerFactory.getLogger(NonTransactionalVersionedGraph.class);
 

@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * @param <T> The type of the base graph, must support transactions.
  * @param <V> The version identifier type
  */
-public class TransactionalVersionedGraph<T extends TransactionalGraph & IndexableGraph & KeyIndexableGraph, V extends Comparable<V>>
+public class TransactionalVersionedGraph<T extends TransactionalGraph & KeyIndexableGraph, V extends Comparable<V>>
         extends ActiveVersionedGraph<T, V> implements TransactionalGraph {
     Logger log = LoggerFactory.getLogger(TransactionalVersionedGraph.class);
 

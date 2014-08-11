@@ -28,7 +28,6 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.IndexableGraph;
 import com.tinkerpop.blueprints.KeyIndexableGraph;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
@@ -49,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * This class must be kept immutable.
  * </p>
  */
-public class HistoricVersionedGraph<T extends KeyIndexableGraph & IndexableGraph, V extends Comparable<V>> extends
+public class HistoricVersionedGraph<T extends KeyIndexableGraph, V extends Comparable<V>> extends
         VersionedGraphBase<T, V> implements WrapperGraph<T> {
     Logger log = LoggerFactory.getLogger(HistoricVersionedGraph.class);
 
@@ -99,7 +98,7 @@ public class HistoricVersionedGraph<T extends KeyIndexableGraph & IndexableGraph
 
         Vertex vertex;
         if (isNaturalIds()) {
-            vertex = getSingleVertex(VEProps.NATURAL_ID_PROP_KEY, id);
+            vertex = getSingleVertex(VEProps.NATURAL_VERTEX_ID_PROP_KEY, id);
         } else {
             vertex = getBaseGraph().getVertex(id);
         }
@@ -157,7 +156,7 @@ public class HistoricVersionedGraph<T extends KeyIndexableGraph & IndexableGraph
 
         Edge edge;
         if (isNaturalIds()) {
-            edge = getSingleEdge(VEProps.NATURAL_ID_PROP_KEY, id);
+            edge = getSingleEdge(VEProps.NATURAL_EDGE_ID_PROP_KEY, id);
         } else {
             edge = getBaseGraph().getEdge(id);
         }
@@ -342,7 +341,7 @@ public class HistoricVersionedGraph<T extends KeyIndexableGraph & IndexableGraph
         Preconditions.checkNotNull(version, "Version is required.");
 
         // TODO: Consider forbidding retrieving edges by internal keys
-        // (especially NATURAL_ID_PROP_KEY), otherwise throw exception.
+        // (especially NATURAL_VERTEX_ID_PROP_KEY), otherwise throw exception.
         return new HistoricVersionedVertexIterable<V>(getVertices(key, value), this, Range.range(version, version));
     }
 
@@ -396,7 +395,7 @@ public class HistoricVersionedGraph<T extends KeyIndexableGraph & IndexableGraph
      */
     public Iterable<Edge> getEdges(final String key, final Object value, V version) {
         // TODO: Consider forbidding retrieving edges by internal keys
-        // (especially NATURAL_ID_PROP_KEY), otherwise throw exception.
+        // (especially NATURAL_VERTEX_ID_PROP_KEY), otherwise throw exception.
         return ((HistoricGraphQuery<V>) query()).forVersion(version).edges();
     }
 

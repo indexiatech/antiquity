@@ -102,10 +102,16 @@ public class VEProps {
     public static final String PRIVATE_HASH_PROP_KEY = "__PRIVATE_HASH__";
 
     /**
-     * The key name of the natural identifier of an element.
+     * The key name of the natural identifier of a vertex.
      */
     @ReservedKey(copiable = false, internal = false, indexed=true, elementType = Element.class, relevance = ReservedKey.RestrictionType.ACTIVE)
-    public static final String NATURAL_ID_PROP_KEY = "__ID__";
+    public static final String NATURAL_VERTEX_ID_PROP_KEY = "__VID__";
+
+    /**
+     * The key name of the natural identifier of an edge.
+     */
+    @ReservedKey(copiable = false, internal = false, indexed=true, elementType = Element.class, relevance = ReservedKey.RestrictionType.ACTIVE)
+    public static final String NATURAL_EDGE_ID_PROP_KEY = "__EID__";
 
     /**
      * The key name of the active element which holds a reference to the latest

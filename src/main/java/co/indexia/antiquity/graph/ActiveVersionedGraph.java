@@ -28,8 +28,6 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.Index;
-import com.tinkerpop.blueprints.IndexableGraph;
 import com.tinkerpop.blueprints.KeyIndexableGraph;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.TransactionalGraph;
@@ -37,7 +35,7 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.wrappers.WrappedGraphQuery;
 import com.tinkerpop.blueprints.util.wrappers.event.listener.GraphChangedListener;
 import com.tinkerpop.blueprints.util.wrappers.id.IdGraph.IdFactory;
-import co.indexia.antiquity.graph.blueprints.EventIndexableGraph;
+import co.indexia.antiquity.graph.blueprints.EventGraph;
 import co.indexia.antiquity.graph.identifierBehavior.GraphIdentifierBehavior;
 import co.indexia.antiquity.range.Range;
 
@@ -71,14 +69,14 @@ import org.slf4j.LoggerFactory;
  * @see NonTransactionalVersionedGraph
  * @see HistoricVersionedGraph
  */
-public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & IndexableGraph, V extends Comparable<V>>
-        extends VersionedGraphBase<T, V> implements GraphChangedListener, KeyIndexableGraph, IndexableGraph {
+public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph, V extends Comparable<V>>
+        extends VersionedGraphBase<T, V> implements GraphChangedListener, KeyIndexableGraph {
     Logger log = LoggerFactory.getLogger(ActiveVersionedGraph.class);
 
     /**
      * Wrapper graph with events support.
      */
-    EventIndexableGraph<T> eventGraph;
+    EventGraph<T> eventGraph;
 
     /**
      * Vertex ID factory. (required only if {@link #isNaturalIds()} is true)
@@ -123,7 +121,7 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
             final IdFactory vertexIdFactory, final IdFactory edgeIdFactory, boolean queue) {
         super(baseGraph, identifierBehavior, conf);
 
-        this.eventGraph = new EventIndexableGraph<T>(baseGraph, queue);
+        this.eventGraph = new EventGraph<T>(baseGraph, queue);
         this.eventGraph.addListener(this);
         this.hGraph = new HistoricVersionedGraph<T, V>(baseGraph, identifierBehavior, conf);
 
@@ -141,10 +139,8 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
         if (isNaturalIds()) {
             // TODO: This is needed?
             // ensure base graph supports vertex/edge,key indices
-            Preconditions
-                    .checkState(
-                            (getFeatures().supportsKeyIndices && getFeatures().supportsVertexIndex && getFeatures().supportsEdgeIndex),
-                            "With natural IDs enabled, The underline database must support vertex/edge,key indices.");
+            Preconditions.checkState((getFeatures().supportsKeyIndices),
+                    "With natural IDs enabled, The underline database must support vertex/edge,key indices.");
 
             this.vertexIdFactory = null == this.vertexIdFactory ? new DefaultIdFactory() : vertexIdFactory;
             this.edgeIdFactory = null == this.edgeIdFactory ? new DefaultIdFactory() : edgeIdFactory;
@@ -167,6 +163,17 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
             return;
         }
 
+        // Create the natural ID key indices
+        KeyIndexableGraph keyIndexedGraph = getBaseGraph();
+        if (!keyIndexedGraph.getIndexedKeys(Vertex.class).contains(VEProps.NATURAL_VERTEX_ID_PROP_KEY)) {
+            keyIndexedGraph.createKeyIndex(VEProps.NATURAL_VERTEX_ID_PROP_KEY, Vertex.class);
+        }
+
+        if (!keyIndexedGraph.getIndexedKeys(Edge.class).contains(VEProps.NATURAL_EDGE_ID_PROP_KEY)) {
+            keyIndexedGraph.createKeyIndex(VEProps.NATURAL_EDGE_ID_PROP_KEY, Edge.class);
+        }
+
+        //TODO: ROOT vertices should have a static unique known UUID for fast access
         Vertex historicRoot = utils.getNonEventableVertex(addActiveVertexInUnderline(null));
         historicRoot.setProperty(VEProps.ROOT_GRAPH_VERTEX_ID, VEProps.HISTORIC_ROOT_GRAPH_VERTEX_VALUE);
         historicRoot.setProperty(VEProps.HISTORIC_ELEMENT_PROP_KEY, true);
@@ -174,16 +181,6 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
         Vertex activeRoot = utils.getNonEventableVertex(addActiveVertexInUnderline(null));
         activeRoot.setProperty(VEProps.ROOT_GRAPH_VERTEX_ID, VEProps.ACTIVE_ROOT_GRAPH_VERTEX_VALUE);
         activeRoot.setProperty(VEProps.HISTORIC_ELEMENT_PROP_KEY, false);
-
-        // Create the natural ID key indices
-        KeyIndexableGraph keyIndexedGraph = getBaseGraph();
-        if (!keyIndexedGraph.getIndexedKeys(Vertex.class).contains(VEProps.NATURAL_ID_PROP_KEY)) {
-            keyIndexedGraph.createKeyIndex(VEProps.NATURAL_ID_PROP_KEY, Vertex.class);
-        }
-
-        if (!keyIndexedGraph.getIndexedKeys(Edge.class).contains(VEProps.NATURAL_ID_PROP_KEY)) {
-            keyIndexedGraph.createKeyIndex(VEProps.NATURAL_ID_PROP_KEY, Edge.class);
-        }
 
         if (getUneventableGraph() instanceof TransactionalGraph) {
             ((TransactionalGraph) getBaseGraph()).commit();
@@ -212,7 +209,7 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
      * 
      * @return An eventable graph
      */
-    public EventIndexableGraph<T> getEventableGraph() {
+    public EventGraph<T> getEventableGraph() {
         return this.eventGraph;
     }
 
@@ -257,7 +254,7 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
 
         Vertex vertex;
         if (isNaturalIds()) {
-            vertex = getSingleVertex(VEProps.NATURAL_ID_PROP_KEY, id);
+            vertex = getSingleVertex(VEProps.NATURAL_VERTEX_ID_PROP_KEY, id);
         } else {
             vertex = getEventableGraph().getVertex(id);
         }
@@ -309,7 +306,7 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
 
         Edge edge;
         if (isNaturalIds()) {
-            edge = ElementUtils.getSingleElement(this, VEProps.NATURAL_ID_PROP_KEY, id, Edge.class);
+            edge = ElementUtils.getSingleElement(this, VEProps.NATURAL_EDGE_ID_PROP_KEY, id, Edge.class);
         } else {
             edge = getEventableGraph().getEdge(id);
         }
@@ -335,7 +332,7 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
     @Override
     public Iterable<Edge> getEdges(final String key, final Object value) {
         // TODO: Consider forbidding retrieving edges by internal keys
-        // (especially NATURAL_ID_PROP_KEY), otherwise throw exception.
+        // (especially NATURAL_EDGE_ID_PROP_KEY), otherwise throw exception.
 
         // We need to make Query to filter by key/value first to get a tinest
         // scope.
@@ -375,41 +372,12 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
         };
     }
 
-    // Indices graph overrides
-    // --------------------------------------------------------------
-    @Override
-    public void dropIndex(final String name) {
-        this.getBaseGraph().dropIndex(name);
-    }
-
-    @Override
-    public <T extends Element> Index<T> createIndex(final String indexName, final Class<T> indexClass,
-            final Parameter... indexParameters) {
-        return new ActiveVersionedIndex<T, V>(getEventableGraph().createIndex(indexName, indexClass, indexParameters),
-                this);
-    }
-
-    @Override
-    public <T extends Element> Index<T> getIndex(final String indexName, final Class<T> indexClass) {
-        final Index<T> index = getEventableGraph().getIndex(indexName, indexClass);
-        if (null == index) {
-            return null;
-        } else {
-            return new ActiveVersionedIndex<T, V>(index, this);
-        }
-    }
-
-    @Override
-    public Iterable<Index<? extends Element>> getIndices() {
-        return new ActiveVersionedIndexIterable(getEventableGraph().getIndices(), this);
-    }
-
     @Override
     public <T extends Element> void dropKeyIndex(final String key, final Class<T> elementClass) {
         if (isNaturalIds()) {
-            if (key.equals(VEProps.NATURAL_ID_PROP_KEY)) {
+            if (key.equals(VEProps.NATURAL_VERTEX_ID_PROP_KEY) || key.equals(VEProps.NATURAL_EDGE_ID_PROP_KEY)) {
                 throw new IllegalArgumentException(String.format("Key [%s] is reserved and cannot be dropped.",
-                        VEProps.NATURAL_ID_PROP_KEY));
+                        VEProps.NATURAL_VERTEX_ID_PROP_KEY));
             }
         }
 
@@ -419,9 +387,9 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
     @Override
     public <T extends Element> void createKeyIndex(final String key, final Class<T> elementClass,
             final Parameter... indexParameters) {
-        if (key.equals(VEProps.NATURAL_ID_PROP_KEY)) {
+        if (key.equals(VEProps.NATURAL_VERTEX_ID_PROP_KEY) || key.equals(VEProps.NATURAL_EDGE_ID_PROP_KEY)) {
             throw new IllegalArgumentException(String.format("Index key [%s] is reserved and cannot be created",
-                    VEProps.NATURAL_ID_PROP_KEY));
+                    VEProps.NATURAL_VERTEX_ID_PROP_KEY));
         }
 
         getEventableGraph().getBaseGraph().createKeyIndex(key, elementClass, indexParameters);
@@ -430,8 +398,9 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
     @Override
     public <T extends Element> Set<String> getIndexedKeys(final Class<T> elementClass) {
         final Set<String> keys = new HashSet<String>();
-        keys.addAll( getEventableGraph().getBaseGraph().getIndexedKeys(elementClass));
-        keys.remove(VEProps.NATURAL_ID_PROP_KEY);
+        keys.addAll(getEventableGraph().getBaseGraph().getIndexedKeys(elementClass));
+        keys.remove(VEProps.NATURAL_VERTEX_ID_PROP_KEY);
+        keys.remove(VEProps.NATURAL_EDGE_ID_PROP_KEY);
         return keys;
     }
 
@@ -532,7 +501,7 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
         HistoricVersionedVertex<V> newHV =
                 addHistoricVertex(active, utils.getStartVersion(latestHV), latestGraphVersion);
         Set<String> excludedProps = new HashSet<String>();
-        excludedProps.add(VEProps.NATURAL_ID_PROP_KEY);
+        excludedProps.add(VEProps.NATURAL_VERTEX_ID_PROP_KEY);
         ElementUtils.copyProps(latestHV.getRaw(), newHV.getRaw(), excludedProps);
 
         // here it's safe to modify latest historic vertex.
@@ -684,7 +653,7 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
             // supplied ids
             // and cannot recieve null but we ignore this id in the logic.
             vertex = getUneventableGraph().addVertex(vertexIdFactory.createId());
-            vertex.setProperty(VEProps.NATURAL_ID_PROP_KEY, idVal);
+            vertex.setProperty(VEProps.NATURAL_VERTEX_ID_PROP_KEY, idVal);
         } else {
             vertex = getUneventableGraph().addVertex(idVal);
         }
@@ -804,7 +773,7 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
             // supplied ids
             // and cannot recieve null but we ignore this id in the logic.
             edge = getUneventableGraph().addEdge(edgeIdFactory.createId(), out, in, label);
-            edge.setProperty(VEProps.NATURAL_ID_PROP_KEY, idVal);
+            edge.setProperty(VEProps.NATURAL_EDGE_ID_PROP_KEY, idVal);
         } else {
             edge = getUneventableGraph().addEdge(idVal, out, in, label);
         }
@@ -873,7 +842,7 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
     /**
      * Graph Builder.
      */
-    public abstract static class ActiveVersionedGraphBuilder<T extends KeyIndexableGraph & IndexableGraph, V extends Comparable<V>> {
+    public abstract static class ActiveVersionedGraphBuilder<T extends KeyIndexableGraph, V extends Comparable<V>> {
         Boolean init = false;
         T baseGraph;
         GraphIdentifierBehavior<V> identifierBehavior;
@@ -921,7 +890,7 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
         protected abstract ActiveVersionedGraph<T, V> createInstance();
     }
 
-    public static class ActiveVersionedTransactionalGraphBuilder<T extends KeyIndexableGraph & IndexableGraph & TransactionalGraph, V extends Comparable<V>>
+    public static class ActiveVersionedTransactionalGraphBuilder<T extends KeyIndexableGraph & TransactionalGraph, V extends Comparable<V>>
             extends ActiveVersionedGraphBuilder<T, V> {
         public ActiveVersionedTransactionalGraphBuilder(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
             super(baseGraph, identifierBehavior);
@@ -939,7 +908,7 @@ public abstract class ActiveVersionedGraph<T extends KeyIndexableGraph & Indexab
         }
     }
 
-    public static class ActiveVersionedNonTransactionalGraphBuilder<T extends KeyIndexableGraph & IndexableGraph, V extends Comparable<V>>
+    public static class ActiveVersionedNonTransactionalGraphBuilder<T extends KeyIndexableGraph, V extends Comparable<V>>
             extends ActiveVersionedGraphBuilder<T, V> {
         public ActiveVersionedNonTransactionalGraphBuilder(T baseGraph, GraphIdentifierBehavior<V> identifierBehavior) {
             super(baseGraph, identifierBehavior);
