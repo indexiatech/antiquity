@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2013 "Indexia Technologies, ltd."
+ * Copyright (c) 2012-2014 "Indexia Technologies, ltd."
  *
  * This file is part of Antiquity.
  *
