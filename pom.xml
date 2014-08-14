@@ -23,13 +23,13 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.indexiatech</groupId>
+	<groupId>co.indexia</groupId>
 	<artifactId>antiquity</artifactId>
-	<version>0.4-SNAPSHOT</version>
+	<version>0.4</version>
 	
 	<name>Antiquity</name>
 	<description>Antiquity - A versioned graph implementation for known graph databases</description>
-	<url>https://github.com/asaf/antiquity</url>
+	<url>https://github.com/indexiatech/antiquity</url>
 	
 	<issueManagement>
 		<url>https://github.com/kevinsawicki/github-maven-example/issues</url>
@@ -44,9 +44,9 @@
 	</licenses>
 	
 	<scm>
-		<url>https://github.com/asaf/antiquity</url>
-		<connection>scm:git:git://github.com/asaf/antiquity.git</connection>
-		<developerConnection>scm:git:git@github.com:asaf/antiquity.git</developerConnection>
+		<url>https://github.com/indexiatech/antiquity</url>
+		<connection>scm:git:git://github.com/indexiatech/antiquity.git</connection>
+		<developerConnection>scm:git:git@github.com:indexiatech/antiquity.git</developerConnection>
 	</scm>
 	
 	<developers>
