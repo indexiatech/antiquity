@@ -79,6 +79,7 @@
 		<cobertura-maven-plugin.version>2.5.2</cobertura-maven-plugin.version>
 		<maven-findbugs-plugin.version>2.5.2</maven-findbugs-plugin.version>
 		<maven-surefire-plugin.version>2.13</maven-surefire-plugin.version>
+		<closeTestReports>true</closeTestReports>
 	</properties>
 
 	<dependencies>
@@ -205,6 +206,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<argLine>${sunfire.argLines}</argLine>
+					<disableXmlReport>${closeTestReports}</disableXmlReport>
 				</configuration>
 			</plugin>
 		</plugins>
